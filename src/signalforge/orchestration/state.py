@@ -114,6 +114,8 @@ class InvestigationState(StateModel):
     steps: list[StepRecord] = []
     history: list[StatusChange] = []
     seen_calls: dict[str, str] = Field(default_factory=dict, description="canonical call key -> evidence id")
+    evidence_index: list[str] = Field(default_factory=list,
+                                      description="one line per gathered evidence item, for status blocks")
     finish_requested: bool = False
     finish_reason: str | None = None
     termination_reason: str | None = None

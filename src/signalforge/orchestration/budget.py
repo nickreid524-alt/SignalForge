@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from signalforge.providers.base import ModelUsage
+
 
 class InvestigationBudget(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -34,6 +36,23 @@ class BudgetUsage(BaseModel):
     suppressed_duplicates: int = 0
     rejected_actions: int = 0
     elapsed_seconds: float = 0.0
+    # Token telemetry (only meaningful when the provider reports usage; scripted/replay report nothing).
+    tokens_reported: bool = False
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cached_input_tokens: int = 0
+    cache_write_tokens: int = 0
+    reasoning_output_tokens: int = 0
+
+    def add_usage(self, usage: ModelUsage) -> None:
+        if not usage.reported:
+            return
+        self.tokens_reported = True
+        self.input_tokens += usage.input_tokens
+        self.output_tokens += usage.output_tokens
+        self.cached_input_tokens += usage.cached_input_tokens
+        self.cache_write_tokens += usage.cache_write_tokens
+        self.reasoning_output_tokens += usage.reasoning_output_tokens
 
     def remaining(self, budget: InvestigationBudget) -> dict[str, int]:
         return {

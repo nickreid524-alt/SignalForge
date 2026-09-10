@@ -18,6 +18,9 @@ def render_markdown(report: InvestigationReport) -> str:
         f"- report status: {report.status}  confidence: {report.confidence:.2f}",
         f"- steps {report.steps_used} | tool calls {report.tool_calls_used} | resource reads {report.resource_reads_used} "
         f"| model calls {report.model_calls_used} | repairs {report.repair_rounds} | duration {report.investigation_duration_seconds:.1f}s",
+        "- tokens: " + (f"{report.token_usage.input_tokens} in / {report.token_usage.output_tokens} out "
+                        f"(cached {report.token_usage.cached_input_tokens}, reasoning {report.token_usage.reasoning_output_tokens})"
+                        if report.token_usage.reported else "not reported (provider uses no LLM)"),
         f"- validation: {'ok' if report.validation.ok else 'FAILED'} "
         f"({len(report.validation.errors)} error(s), {len(report.validation.warnings)} warning(s))",
         "",

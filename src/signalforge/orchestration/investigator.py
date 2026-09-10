@@ -2,6 +2,11 @@
 
     created -> seeding -> (deliberating <-> gathering)* -> concluding -> validating (-> repairing -> validating)*
             -> completed | completed_with_warnings | failed_validation | failed
+
+The engine is provider-agnostic: it speaks the neutral boundary in
+``signalforge.providers.base`` and reacts to normalised ``ProviderFailure``
+categories (retryable vs. not). It never inspects vendor objects, never stores
+provider-native opaque blocks, and never calls a tool the policy did not accept.
 """
 
 from __future__ import annotations
@@ -36,6 +41,7 @@ from signalforge.orchestration.rendering import (
     render_rejection,
     render_report_request,
     render_seed,
+    render_status_block,
     render_validation_failure,
 )
 from signalforge.orchestration.state import (
@@ -63,10 +69,12 @@ from signalforge.providers.base import (
     UserMessage,
     request_fingerprint,
 )
+from signalforge.providers.errors import ProviderFailure
 from signalforge.reports.schema import (
     EvidenceSummary,
     InvestigationReport,
     ReportDraft,
+    TokenUsageSummary,
     ValidationIssue,
     ValidationResult,
 )
@@ -102,6 +110,13 @@ class InvestigationResult:
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+def _evidence_line(item: EvidenceItem) -> str:
+    summary = (item.payload or {}).get("summary") if item.payload else None
+    detail = summary if isinstance(summary, str) else f"{len(item.source_ids)} record(s)"
+    status = "" if item.ok else " [FAILED]"
+    return f"{item.evidence_id} {item.source_kind} {item.source_name} ({item.result_kind or 'error'}){status}: {detail[:140]}"
 
 
 class Investigator:
@@ -151,7 +166,7 @@ class Investigator:
                                   max_actions_per_step=self.budget.max_actions_per_step)
 
             queue = await self.client.read_as_evidence(registry, "incidents://open")
-            self._record_evidence(investigation_id, queue)
+            self._record_evidence(state, queue)
             state.seen_calls[resource_key("incidents://open")] = queue.evidence_id
             if not queue.ok:
                 raise InvestigationError(f"could not read the incident queue: {queue.error}")
@@ -162,7 +177,7 @@ class Investigator:
             state.incident = incident
             self.trace.record_incident(investigation_id, incident.model_dump(mode="json"))
             topology = await self.client.read_as_evidence(registry, f"topology://services/{incident.affected_service}")
-            self._record_evidence(investigation_id, topology)
+            self._record_evidence(state, topology)
             state.seen_calls[resource_key(topology.source_name)] = topology.evidence_id
             conversation.append(UserMessage(text=render_seed(incident, [queue, topology],
                                                              self.budget.max_evidence_chars_per_result)))
@@ -179,6 +194,7 @@ class Investigator:
                 state.usage.steps = step_no
                 step = StepRecord(step=step_no, started_at=_now())
                 state.steps.append(step)
+                conversation.append(UserMessage(text=render_status_block(state, state.usage.remaining(self.budget))))
                 context = self._context(state, incident, "deliberate")
                 turn, call_id = await self._model_call(state, conversation, purpose="deliberate",
                                                        tools=list(tool_specs.values()), context=context)
@@ -266,13 +282,15 @@ class Investigator:
             step=state.usage.steps, purpose=purpose, budget_remaining=state.usage.remaining(self.budget),  # type: ignore[arg-type]
         )
 
-    def _record_evidence(self, investigation_id: str, item: EvidenceItem) -> None:
-        self.trace.record_evidence(investigation_id, item.model_dump(mode="json"))
+    def _record_evidence(self, state: InvestigationState, item: EvidenceItem) -> None:
+        self.trace.record_evidence(state.investigation_id, item.model_dump(mode="json"))
+        state.evidence_index.append(_evidence_line(item))
 
     async def _model_call(self, state: InvestigationState, conversation: Conversation, *, purpose: str,
                           tools: list[ToolSpec], context: InvestigationContext,
                           schema: type[BaseModel] | None = None) -> tuple[ModelTurn | StructuredResult, str]:
         attempts = 0
+        info = self.provider.info
         while True:
             if state.usage.model_calls >= self.budget.max_model_calls:
                 raise InvestigationError(f"model-call budget ({self.budget.max_model_calls}) exhausted before {purpose}")
@@ -280,6 +298,8 @@ class Investigator:
             state.usage.model_calls += 1
             call_id = f"{state.investigation_id}-mc{state.usage.model_calls:03d}"
             fingerprint = request_fingerprint(self.system, conversation, tools, schema.__name__ if schema else None)
+            base_record = {"id": call_id, "step": state.usage.steps, "purpose": purpose, "provider_name": info.name,
+                           "provider_model": info.model, "request_fingerprint": fingerprint, "tool_count": len(tools)}
             started = perf_counter()
             try:
                 with anyio.fail_after(self.config.timeout_seconds):
@@ -290,21 +310,29 @@ class Investigator:
                         out = await self.provider.generate_structured(
                             self.system, list(conversation), schema=schema, context=context, config=self.config)
             except (ProviderError, TimeoutError) as exc:
-                latency = (perf_counter() - started) * 1000
+                latency = round((perf_counter() - started) * 1000, 3)
+                category = exc.category if isinstance(exc, ProviderFailure) else (
+                    "timeout" if isinstance(exc, TimeoutError) else "unknown")
+                retryable = exc.retryable if isinstance(exc, ProviderFailure) else True
                 self.trace.record_model_call(state.investigation_id, {
-                    "id": call_id, "step": state.usage.steps, "purpose": purpose, "provider_name": self.provider.info.name,
-                    "request_fingerprint": fingerprint, "tool_count": len(tools), "latency_ms": round(latency, 3),
-                    "error": f"{exc.__class__.__name__}: {exc}",
+                    **base_record, "latency_ms": latency, "error": f"{exc.__class__.__name__}: {exc}",
+                    "error_category": category,
                 })
-                if attempts > self.provider_retries:
+                if not retryable or attempts > self.provider_retries:
                     raise InvestigationError(
-                        f"provider failed after {attempts} attempt(s): {exc.__class__.__name__}: {exc}") from exc
+                        f"provider failed after {attempts} attempt(s) [{category}]: {exc.__class__.__name__}: {exc}") from exc
                 continue
+            state.usage.add_usage(out.usage)
+            usage = out.usage
             self.trace.record_model_call(state.investigation_id, {
-                "id": call_id, "step": state.usage.steps, "purpose": purpose, "provider_name": self.provider.info.name,
-                "request_fingerprint": fingerprint, "tool_count": len(tools), "latency_ms": out.latency_ms,
-                "input_tokens": out.usage.input_tokens, "output_tokens": out.usage.output_tokens,
-                "stop_reason": getattr(out, "stop_reason", "structured"), "response": out.model_dump(mode="json"),
+                **base_record, "latency_ms": out.latency_ms, "usage_reported": usage.reported,
+                "input_tokens": usage.input_tokens if usage.reported else None,
+                "output_tokens": usage.output_tokens if usage.reported else None,
+                "cached_input_tokens": usage.cached_input_tokens if usage.reported else None,
+                "reasoning_output_tokens": usage.reasoning_output_tokens if usage.reported else None,
+                "stop_reason": getattr(out, "stop_reason", "structured"),
+                # Opaque provider blocks (thinking / reasoning items) are never persisted.
+                "response": out.model_dump(mode="json", exclude={"opaque"}),
             })
             return out, call_id
 
@@ -328,7 +356,7 @@ class Investigator:
             item = await self.client.gather(registry, action.name, action.arguments)
             state.usage.tool_calls += 1
             state.seen_calls[call_key(action.name, action.arguments)] = item.evidence_id
-            self._record_evidence(state.investigation_id, item)
+            self._record_evidence(state, item)
             outcome = ActionOutcome(request_id=action.request_id, kind="call_tool", name=action.name,
                                     arguments=action.arguments, accepted=True, evidence_id=item.evidence_id, ok=item.ok,
                                     error=item.error, latency_ms=item.latency_ms)
@@ -338,7 +366,7 @@ class Investigator:
             item = await self.client.read_as_evidence(registry, action.uri)
             state.usage.resource_reads += 1
             state.seen_calls[resource_key(action.uri)] = item.evidence_id
-            self._record_evidence(state.investigation_id, item)
+            self._record_evidence(state, item)
             outcome = ActionOutcome(request_id=action.request_id, kind="read_resource", name="read_resource",
                                     arguments={"uri": action.uri}, accepted=True, evidence_id=item.evidence_id, ok=item.ok,
                                     error=item.error, latency_ms=item.latency_ms)
@@ -412,6 +440,10 @@ class Investigator:
             suppressed_duplicate_calls=usage.suppressed_duplicates, rejected_actions=usage.rejected_actions,
             investigation_duration_seconds=round(usage.elapsed_seconds, 3), budget_exhausted=bool(state.termination_reason),
             termination_reason=state.termination_reason, evidence_index=index,
+            token_usage=TokenUsageSummary(reported=usage.tokens_reported, input_tokens=usage.input_tokens,
+                                          output_tokens=usage.output_tokens, cached_input_tokens=usage.cached_input_tokens,
+                                          cache_write_tokens=usage.cache_write_tokens,
+                                          reasoning_output_tokens=usage.reasoning_output_tokens, model_calls=usage.model_calls),
         )
 
 

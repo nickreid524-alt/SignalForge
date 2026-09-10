@@ -8,32 +8,16 @@ Secrets never enter the store: all free text passes through ``redact``.
 from __future__ import annotations
 
 import json
-import re
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
-_SECRET_PATTERNS = [
-    re.compile(r"sk-[A-Za-z0-9_-]{10,}"),
-    re.compile(r"(?i)bearer\s+[A-Za-z0-9._~+/=-]{10,}"),
-    re.compile(r"(?i)\b(api[_-]?key|secret|password|token)\b(\s*[:=]\s*)([^\s,;'\"]{6,})"),
-    re.compile(r"ghp_[A-Za-z0-9]{20,}"),
-]
+from signalforge.redaction import redact  # noqa: E402 - re-exported for backwards compatibility
 
-
-def redact(text: str | None) -> str | None:
-    if text is None:
-        return None
-    out = text
-    for pattern in _SECRET_PATTERNS:
-        if pattern.groups >= 3:
-            out = pattern.sub(lambda m: f"{m.group(1)}{m.group(2)}[REDACTED]", out)
-        else:
-            out = pattern.sub("[REDACTED]", out)
-    return out
+__all__ = ["SCHEMA_VERSION", "TraceStore", "redact"]
 
 
 def _json(value: Any) -> str:
@@ -62,8 +46,9 @@ CREATE TABLE IF NOT EXISTS steps (
 );
 CREATE TABLE IF NOT EXISTS model_calls (
     id TEXT PRIMARY KEY, investigation_id TEXT NOT NULL, step INTEGER, purpose TEXT NOT NULL, provider_name TEXT,
-    request_fingerprint TEXT, tool_count INTEGER, latency_ms REAL, input_tokens INTEGER, output_tokens INTEGER,
-    stop_reason TEXT, response_json TEXT, error TEXT, created_at TEXT NOT NULL
+    provider_model TEXT, request_fingerprint TEXT, tool_count INTEGER, latency_ms REAL, usage_reported INTEGER,
+    input_tokens INTEGER, output_tokens INTEGER, cached_input_tokens INTEGER, reasoning_output_tokens INTEGER,
+    stop_reason TEXT, response_json TEXT, error TEXT, error_category TEXT, created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS actions (
     investigation_id TEXT NOT NULL, step INTEGER NOT NULL, seq INTEGER NOT NULL, request_id TEXT, kind TEXT NOT NULL,
@@ -155,10 +140,13 @@ class TraceStore:
     def record_model_call(self, investigation_id: str, call: dict[str, Any]) -> None:
         with self._conn:
             self._conn.execute(
-                "INSERT INTO model_calls VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO model_calls VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (call["id"], investigation_id, call.get("step"), call["purpose"], call.get("provider_name"),
-                 call.get("request_fingerprint"), call.get("tool_count"), call.get("latency_ms"), call.get("input_tokens"),
-                 call.get("output_tokens"), call.get("stop_reason"), _json(call.get("response")), redact(call.get("error")), _now()),
+                 call.get("provider_model"), call.get("request_fingerprint"), call.get("tool_count"), call.get("latency_ms"),
+                 None if call.get("usage_reported") is None else int(bool(call.get("usage_reported"))),
+                 call.get("input_tokens"), call.get("output_tokens"), call.get("cached_input_tokens"),
+                 call.get("reasoning_output_tokens"), call.get("stop_reason"), _json(call.get("response")),
+                 redact(call.get("error")), call.get("error_category"), _now()),
             )
 
     def record_action(self, investigation_id: str, step: int, outcome: dict[str, Any]) -> None:

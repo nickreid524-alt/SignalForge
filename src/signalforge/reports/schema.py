@@ -94,6 +94,18 @@ class EvidenceSummary(ReportModel):
     cited: bool
 
 
+class TokenUsageSummary(ReportModel):
+    """Provider-reported token usage. ``reported=False`` means the provider uses no LLM (scripted / replay)."""
+
+    reported: bool = False
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cached_input_tokens: int = 0
+    cache_write_tokens: int = 0
+    reasoning_output_tokens: int = 0
+    model_calls: int = 0
+
+
 class InvestigationReport(ReportDraft):
     """Draft plus everything the orchestrator knows: identity, provider, budget use, validation, evidence index."""
 
@@ -114,3 +126,4 @@ class InvestigationReport(ReportDraft):
     budget_exhausted: bool
     termination_reason: str | None
     evidence_index: list[EvidenceSummary]
+    token_usage: TokenUsageSummary = TokenUsageSummary()
