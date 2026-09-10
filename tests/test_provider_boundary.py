@@ -58,10 +58,10 @@ def test_scripted_provider_is_explicitly_labelled_non_llm():
 def test_factory_choices_and_failures():
     assert set(PROVIDER_CHOICES) == {"scripted", "replay", "anthropic", "openai"}
     assert isinstance(create_provider("scripted"), ScriptedDemoProvider)
-    with pytest.raises(ProviderError, match="not available"):
-        create_provider("anthropic")
-    with pytest.raises(ProviderError, match="not available"):
-        create_provider("openai")
+    with pytest.raises(ProviderError, match="missing_model"):      # setup failures are normalised, never a network call
+        create_provider("anthropic", env={})
+    with pytest.raises(ProviderError, match="missing_api_key"):
+        create_provider("openai", env={"SIGNALFORGE_OPENAI_MODEL": "m"})
     with pytest.raises(ProviderError, match="cassette"):
         create_provider("replay")
     with pytest.raises(ProviderError, match="unknown provider"):

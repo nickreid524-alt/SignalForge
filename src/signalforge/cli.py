@@ -4,12 +4,15 @@
     signalforge scenarios list
     signalforge serve-mcp [--transport stdio|streamable-http] [--port 8000]
     signalforge demo [--transport in-memory|stdio] [--incident INC-2026-0101]
-    signalforge investigate INC-2026-0101 [--provider scripted|replay] [--transport in-memory|stdio] [--json trace.json]
+    signalforge providers                                   # what each provider needs and whether it is ready
+    signalforge provider check anthropic|openai --yes       # one tiny LIVE call to verify credentials (paid)
+    signalforge investigate INC-2026-0101 [--provider scripted|replay|anthropic|openai] [--yes] [--json trace.json]
     signalforge trace <investigation-id> [--json out.json] | trace --list
-    signalforge eval [--scenario SCN-01] [--json out.json] [--markdown out.md]
+    signalforge eval [--scenario SCN-01] [--provider ...] [--yes] [--allow-live-suite] [--json out.json]
 
-Modes: `scripted` is a SCRIPTED DEMONSTRATION - no LLM API is used. `replay` replays a recorded cassette.
-Live providers are not available in this phase.
+The default provider is `scripted` (SCRIPTED DEMONSTRATION MODE - no LLM API). Live providers call PAID
+APIs and require --yes; a multi-scenario live evaluation additionally requires --allow-live-suite.
+Every command states USES LIVE API: YES / NO for the selected provider.
 """
 
 from __future__ import annotations
@@ -18,9 +21,11 @@ import argparse
 import asyncio
 import json
 import sys
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
+
+import anyio
 
 from signalforge import __version__
 from signalforge.audit.export import export_investigation, write_export
@@ -31,8 +36,24 @@ from signalforge.mcp_client.client import OpsClient
 from signalforge.mcp_server.server import create_server
 from signalforge.orchestration.budget import InvestigationBudget
 from signalforge.orchestration.investigator import Investigator
-from signalforge.providers.base import ProviderError, ProviderInfo
-from signalforge.providers.factory import PROVIDER_CHOICES, create_provider
+from signalforge.providers.base import (
+    GenerationConfig,
+    InvestigationContext,
+    ProviderError,
+    ProviderInfo,
+    SystemPrompt,
+    UserMessage,
+)
+from signalforge.providers.errors import ProviderFailure
+from signalforge.providers.factory import (
+    LIVE_PROVIDERS,
+    PROVIDER_CHOICES,
+    ProviderSettings,
+    all_provider_statuses,
+    create_provider,
+    default_provider_name,
+    provider_status,
+)
 from signalforge.reports.render import render_markdown
 from signalforge.world.generator import build_snapshot
 from signalforge.world.repository import WorldRepository
@@ -54,8 +75,37 @@ def _mode_banner(info: ProviderInfo) -> None:
         _print("REPLAY MODE")
         _print("No LLM API is being used. Recorded provider interactions are replayed deterministically.")
     else:
-        _print(f"LIVE MODE: provider {info.name} model {info.model}")
+        _print(f"LIVE MODE: provider {info.name}, model {info.model}")
+        _print("This run calls a PAID vendor API with the key from your environment.")
+    _print(f"USES LIVE API: {'YES' if info.uses_live_api else 'NO'}")
     _print("=" * 78)
+
+
+def _live_guard(provider_name: str, yes: bool, *, what: str) -> int | None:
+    """For live providers: refuse to proceed without --yes. Returns an exit code to stop with, or None."""
+    if provider_name not in LIVE_PROVIDERS:
+        return None
+    status = provider_status(provider_name)
+    if not yes:
+        _print("=" * 78)
+        _print(f"LIVE API CONFIRMATION REQUIRED: {what} would call the {provider_name} API (paid).")
+        _print(f"  model: {status.model or '(not configured)'}   ready: {'yes' if status.ready else 'no - ' + status.note}")
+        _print("  Re-run with --yes to confirm. Nothing was called.")
+        _print("=" * 78)
+        return 2
+    if not status.ready:
+        _print(f"setup error: provider {provider_name} is not ready ({status.note}). Nothing was called.")
+        return 2
+    return None
+
+
+def _print_tokens(report_or_usage: Any) -> None:
+    usage = report_or_usage
+    if not getattr(usage, "reported", getattr(usage, "tokens_reported", False)):
+        _print("TOKENS    not reported (provider uses no LLM)")
+        return
+    _print(f"TOKENS    input={usage.input_tokens} output={usage.output_tokens} cached_input={usage.cached_input_tokens} "
+           f"reasoning_output={usage.reasoning_output_tokens}")
 
 
 # ---------------------------------------------------------------------- world / scenarios / serve / demo (Phase 1)
@@ -196,12 +246,71 @@ def cmd_demo(args: argparse.Namespace) -> int:
     return asyncio.run(_demo(args))
 
 
-# ---------------------------------------------------------------------- investigate / trace / eval (Phase 2)
+# ---------------------------------------------------------------------- providers (Phase 3)
+
+
+def cmd_providers(args: argparse.Namespace) -> int:
+    _print(f"{'provider':<10} {'mode':<9} {'USES LIVE API':<14} {'sdk':<18} {'credentials':<12} {'model':<28} {'ready':<6} note")
+    for status in all_provider_statuses(ProviderSettings.from_env()):
+        sdk = "n/a" if status.sdk_installed is None else (f"installed {status.sdk_version}" if status.sdk_installed else "not installed")
+        creds = "n/a" if status.credentials_present is None else ("present" if status.credentials_present else "missing")
+        _print(f"{status.name:<10} {status.mode:<9} {('YES' if status.uses_live_api else 'NO'):<14} {sdk:<18} {creds:<12} "
+               f"{(status.model or '-'):<28} {('yes' if status.ready else 'no'):<6} {status.note}")
+    _print("")
+    _print(f"default provider: {default_provider_name()} (SIGNALFORGE_PROVIDER). Live providers need an API key from the vendor's")
+    _print("developer console: a Claude consumer subscription is not an Anthropic API key, and a ChatGPT subscription is not an OpenAI API key.")
+    return 0
+
+
+async def _provider_check(args: argparse.Namespace) -> int:
+    name = args.provider
+    status = provider_status(name)
+    if not status.uses_live_api:
+        _print(f"{name}: USES LIVE API: NO - nothing to check ({status.note}).")
+        return 0
+    if not status.ready:
+        _print(f"setup error: provider {name} is not ready ({status.note}). Nothing was called.")
+        return 2
+    guard = _live_guard(name, args.yes, what="provider check")
+    if guard is not None:
+        return guard
+    try:
+        provider = create_provider(name)
+    except ProviderFailure as exc:
+        _print(f"setup error [{exc.category}]: {exc.detail}")
+        return 2
+    _mode_banner(provider.info)
+    _print(f"one request, max_output_tokens=32, timeout={args.timeout:g}s, no tools")
+    context = InvestigationContext(investigation_id="provider-check", incident_id="none", affected_service="none",
+                                   investigation_clock=datetime.now(UTC), step=0, purpose="deliberate")
+    config = GenerationConfig(max_output_tokens=32, timeout_seconds=args.timeout)
+    try:
+        with anyio.fail_after(args.timeout + 5):
+            turn = await provider.complete(SystemPrompt(text="You are a connectivity check. Reply with the single word OK."),
+                                           [UserMessage(text="Reply with the single word OK.")], tools=[], context=context,
+                                           config=config)
+    except ProviderFailure as exc:
+        _print(f"FAILED [{exc.category}] {exc.detail}")
+        return 1
+    except TimeoutError:
+        _print(f"FAILED [timeout] no response within {args.timeout:g}s")
+        return 1
+    _print(f"OK  model={provider.info.model} latency={turn.latency_ms:.0f}ms text={(turn.text or '')[:60]!r}")
+    _print_tokens(turn.usage)
+    return 0
+
+
+def cmd_provider_check(args: argparse.Namespace) -> int:
+    return asyncio.run(_provider_check(args))
+
+
+# ---------------------------------------------------------------------- investigate / trace / eval
 
 
 def _budget_from_args(args: argparse.Namespace) -> InvestigationBudget:
     overrides = {k: v for k, v in {
         "max_steps": getattr(args, "max_steps", None), "max_tool_calls": getattr(args, "max_tool_calls", None),
+        "max_model_calls": getattr(args, "max_model_calls", None),
         "max_repair_rounds": getattr(args, "max_repair_rounds", None),
         "max_wall_clock_seconds": getattr(args, "max_seconds", None),
     }.items() if v is not None}
@@ -209,14 +318,23 @@ def _budget_from_args(args: argparse.Namespace) -> InvestigationBudget:
 
 
 async def _investigate(args: argparse.Namespace) -> int:
+    guard = _live_guard(args.provider, args.yes, what=f"investigate {args.incident}")
+    if guard is not None:
+        return guard
     try:
         provider = create_provider(args.provider, cassette=args.cassette)
+    except ProviderFailure as exc:
+        _print(f"setup error [{exc.category}]: {exc.detail}")
+        return 2
     except ProviderError as exc:
         _print(f"error: {exc}")
         return 2
     _mode_banner(provider.info)
     trace = TraceStore(args.trace_db)
     budget = _budget_from_args(args)
+    if provider.info.uses_live_api:
+        _print(f"budget: max_steps={budget.max_steps} max_tool_calls={budget.max_tool_calls} max_model_calls={budget.max_model_calls} "
+               f"max_repair_rounds={budget.max_repair_rounds} max_wall_clock={budget.max_wall_clock_seconds:g}s")
     config = WorldConfig(seed=args.seed)
     if args.transport == "stdio":
         cm = OpsClient.stdio(args=["-m", "signalforge.mcp_server", "--transport", "stdio", "--seed", str(args.seed)])
@@ -238,7 +356,7 @@ async def _investigate(args: argparse.Namespace) -> int:
         _print(f"BUDGET    exhausted: {state.termination_reason}")
     _print("\nSTEPS")
     for step in state.steps:
-        _print(f"  step {step.step}: {step.assistant_text or ''}")
+        _print(f"  step {step.step}: {(step.assistant_text or '')[:160]}")
         for action in step.actions:
             if action.accepted:
                 target = action.arguments.get("uri") if action.kind == "read_resource" else action.name
@@ -275,6 +393,8 @@ async def _investigate(args: argparse.Namespace) -> int:
     _print(f"\nUSAGE     steps={state.usage.steps} tool_calls={state.usage.tool_calls} resource_reads={state.usage.resource_reads} "
            f"model_calls={state.usage.model_calls} duplicates_suppressed={state.usage.suppressed_duplicates} "
            f"rejected={state.usage.rejected_actions} elapsed={state.usage.elapsed_seconds:.1f}s")
+    _print_tokens(state.usage)
+    _print(f"PROVIDER  {provider.info.name} ({provider.info.mode}) USES LIVE API: {'YES' if provider.info.uses_live_api else 'NO'}")
     _print(f"TRACE ID  {state.investigation_id}  (db: {args.trace_db})")
     if args.markdown and report is not None:
         _print("\n" + render_markdown(report))
@@ -312,8 +432,9 @@ def cmd_trace(args: argparse.Namespace) -> int:
         _print(f"  {change['at']}  {change['from_status']} -> {change['to_status']}  {change['note']}")
     _print("\nMODEL CALLS")
     for call in bundle["model_calls"]:
-        _print(f"  {call['id']}  step={call['step']}  purpose={call['purpose']}  latency={call['latency_ms']}ms  "
-               f"stop={call['stop_reason']}  error={call['error']}")
+        tokens = (f"tokens in={call['input_tokens']} out={call['output_tokens']}" if call.get("usage_reported") else "tokens n/a")
+        _print(f"  {call['id']}  step={call['step']}  purpose={call['purpose']}  model={call.get('provider_model')}  "
+               f"latency={call['latency_ms']}ms  {tokens}  stop={call['stop_reason']}  error={call['error_category'] or call['error']}")
     _print("\nACTIONS")
     for action in bundle["actions"]:
         if action["accepted"]:
@@ -356,14 +477,25 @@ def cmd_eval(args: argparse.Namespace) -> int:
     from signalforge.evals.report import render_markdown as render_eval_markdown
     from signalforge.evals.runner import run_evaluation
 
+    scenario_ids = [args.scenario] if args.scenario else None
+    if args.provider in LIVE_PROVIDERS:
+        guard = _live_guard(args.provider, args.yes, what=f"eval ({args.scenario or 'all 15 scenarios'})")
+        if guard is not None:
+            return guard
+        if scenario_ids is None and not args.allow_live_suite:
+            _print("LIVE SUITE GUARD: evaluating all 15 scenarios against a paid API requires --allow-live-suite "
+                   "(or pick one with --scenario SCN-xx). Nothing was called.")
+            return 2
     try:
         info = create_provider(args.provider, cassette=args.cassette).info
+    except ProviderFailure as exc:
+        _print(f"setup error [{exc.category}]: {exc.detail}")
+        return 2
     except ProviderError as exc:
         _print(f"error: {exc}")
         return 2
     _mode_banner(info)
     trace = TraceStore(args.trace_db) if args.trace_db else None
-    scenario_ids = [args.scenario] if args.scenario else None
     summary, _ = run_evaluation(scenario_ids, provider_name=args.provider, cassette=args.cassette, trace=trace,
                                 budget=_budget_from_args(args))
     _print(render_table(summary))
@@ -381,6 +513,14 @@ def cmd_eval(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------- parser
+
+
+def _add_budget_flags(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--max-steps", type=int)
+    parser.add_argument("--max-tool-calls", type=int)
+    parser.add_argument("--max-model-calls", type=int)
+    parser.add_argument("--max-repair-rounds", type=int)
+    parser.add_argument("--max-seconds", type=float)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -417,17 +557,26 @@ def build_parser() -> argparse.ArgumentParser:
     demo.add_argument("--seed", type=int, default=WorldConfig().seed)
     demo.set_defaults(func=cmd_demo)
 
+    providers = sub.add_parser("providers", help="list providers, whether they use a live API, and their readiness")
+    providers.set_defaults(func=cmd_providers)
+
+    provider = sub.add_parser("provider", help="provider utilities")
+    provider_sub = provider.add_subparsers(dest="provider_command", required=True)
+    check = provider_sub.add_parser("check", help="make ONE tiny live call to verify credentials (paid API; requires --yes)")
+    check.add_argument("provider", choices=PROVIDER_CHOICES)
+    check.add_argument("--yes", action="store_true", help="confirm that a real API call may be made")
+    check.add_argument("--timeout", type=float, default=60.0)
+    check.set_defaults(func=cmd_provider_check)
+
     investigate = sub.add_parser("investigate", help="run a bounded investigation of an open incident")
     investigate.add_argument("incident", help="open incident id, e.g. INC-2026-0101")
-    investigate.add_argument("--provider", choices=PROVIDER_CHOICES, default="scripted")
+    investigate.add_argument("--provider", choices=PROVIDER_CHOICES, default=default_provider_name())
     investigate.add_argument("--cassette", help="recorded cassette path (replay provider)")
+    investigate.add_argument("--yes", action="store_true", help="confirm a LIVE (paid) provider run")
     investigate.add_argument("--transport", choices=["in-memory", "stdio"], default="in-memory")
     investigate.add_argument("--trace-db", default=DEFAULT_TRACE_DB)
     investigate.add_argument("--seed", type=int, default=WorldConfig().seed)
-    investigate.add_argument("--max-steps", type=int)
-    investigate.add_argument("--max-tool-calls", type=int)
-    investigate.add_argument("--max-repair-rounds", type=int)
-    investigate.add_argument("--max-seconds", type=float)
+    _add_budget_flags(investigate)
     investigate.add_argument("--markdown", action="store_true", help="also print the rendered report")
     investigate.add_argument("--json", help="export the investigation trace to this JSON file")
     investigate.set_defaults(func=cmd_investigate)
@@ -441,15 +590,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     evaluate = sub.add_parser("eval", help="run the deterministic evaluation harness")
     evaluate.add_argument("--scenario", help="run a single scenario, e.g. SCN-01")
-    evaluate.add_argument("--provider", choices=PROVIDER_CHOICES, default="scripted")
+    evaluate.add_argument("--provider", choices=PROVIDER_CHOICES, default=default_provider_name())
     evaluate.add_argument("--cassette")
+    evaluate.add_argument("--yes", action="store_true", help="confirm a LIVE (paid) provider run")
+    evaluate.add_argument("--allow-live-suite", action="store_true",
+                          help="allow a multi-scenario evaluation against a live provider (many paid calls)")
     evaluate.add_argument("--trace-db", help="persist investigation traces to this SQLite file (default: in-memory)")
     evaluate.add_argument("--json", help="write the comparable evaluation summary to this JSON file")
     evaluate.add_argument("--markdown", help="write a Markdown results table to this file")
-    evaluate.add_argument("--max-steps", type=int)
-    evaluate.add_argument("--max-tool-calls", type=int)
-    evaluate.add_argument("--max-repair-rounds", type=int)
-    evaluate.add_argument("--max-seconds", type=float)
+    _add_budget_flags(evaluate)
     evaluate.set_defaults(func=cmd_eval)
     return parser
 

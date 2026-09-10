@@ -30,6 +30,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Live model providers are optional. The base install runs scripted investigations, replay, MCP,
+# retrieval, evaluation and traces with no vendor SDK and no credentials.
+anthropic = ["anthropic>=1,<2"]
+openai = ["openai>=3,<4"]
+providers = ["anthropic>=1,<2", "openai>=3,<4"]
 dev = [
   "pytest>=8",
   "anyio>=4.9",

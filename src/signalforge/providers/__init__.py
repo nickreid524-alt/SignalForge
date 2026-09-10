@@ -17,6 +17,7 @@ from signalforge.providers.base import (
     InvestigationContext,
     ModelProvider,
     ModelTurn,
+    ProviderCapabilities,
     ProviderError,
     ProviderInfo,
     StructuredResult,
@@ -37,6 +38,12 @@ _LAZY = {
     "Cassette": ("signalforge.providers.replay", "Cassette"),
     "create_provider": ("signalforge.providers.factory", "create_provider"),
     "PROVIDER_CHOICES": ("signalforge.providers.factory", "PROVIDER_CHOICES"),
+    "ProviderSettings": ("signalforge.providers.factory", "ProviderSettings"),
+    "provider_status": ("signalforge.providers.factory", "provider_status"),
+    "AnthropicProvider": ("signalforge.providers.anthropic_provider", "AnthropicProvider"),
+    "OpenAIProvider": ("signalforge.providers.openai_provider", "OpenAIProvider"),
+    "ProviderFailure": ("signalforge.providers.errors", "ProviderFailure"),
+    "classify_exception": ("signalforge.providers.errors", "classify_exception"),
 }
 
 
@@ -51,6 +58,7 @@ def __getattr__(name: str) -> Any:
 __all__ = [
     "EVIDENCE_HEADER_PREFIX",
     "PROVIDER_CHOICES",
+    "AnthropicProvider",
     "AssistantMessage",
     "Cassette",
     "Conversation",
@@ -58,8 +66,12 @@ __all__ = [
     "InvestigationContext",
     "ModelProvider",
     "ModelTurn",
+    "OpenAIProvider",
+    "ProviderCapabilities",
     "ProviderError",
+    "ProviderFailure",
     "ProviderInfo",
+    "ProviderSettings",
     "RecordingProvider",
     "ReplayMismatch",
     "ReplayProvider",
@@ -71,6 +83,8 @@ __all__ = [
     "ToolResultsMessage",
     "ToolSpec",
     "UserMessage",
+    "classify_exception",
     "create_provider",
+    "provider_status",
     "request_fingerprint",
 ]

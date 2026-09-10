@@ -35,8 +35,10 @@ def test_investigate_scripted_and_trace(tmp_path, capsys):
 
 
 def test_investigate_rejects_unavailable_providers(tmp_path, capsys):
+    # a live provider without --yes is refused before any client is built, whatever the environment holds
     assert cli.main(["investigate", "INC-2026-0101", "--provider", "anthropic", "--trace-db", str(tmp_path / "t.sqlite")]) == 2
-    assert "not available" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "LIVE API CONFIRMATION REQUIRED" in out and "Nothing was called" in out
     assert cli.main(["investigate", "INC-2026-0101", "--provider", "replay", "--trace-db", str(tmp_path / "t.sqlite")]) == 2
     assert "cassette" in capsys.readouterr().out
 
