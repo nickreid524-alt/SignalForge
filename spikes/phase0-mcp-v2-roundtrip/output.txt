@@ -1,0 +1,475 @@
+Tool 'query_logs' failed: "Error executing tool query_logs: No such service: 'unknown-svc'"
+Tool 'query_logs' rejected arguments: ['limit']
+Tool 'does_not_exist' failed: 'Unknown tool: does_not_exist'
+Resource 'runbook://checkout-api/RB-999' failed: "No runbook 'RB-999' for 'checkout-api'"
+mcp version: ?
+
+######## IN-MEMORY Client(server) ########
+server_info: name='spike-ops' title=None version='' description=None website_url=None icons=None
+protocol_version: 2026-07-28
+instructions: Read-only synthetic ops environment (spike).
+
+=== tool query_logs ===
+{
+  "title": null,
+  "description": "Search application logs for a service (synthetic).",
+  "annotations": {
+    "title": null,
+    "read_only_hint": true,
+    "destructive_hint": null,
+    "idempotent_hint": null,
+    "open_world_hint": false
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "service": {
+        "description": "Service name",
+        "maxLength": 64,
+        "minLength": 1,
+        "title": "Service",
+        "type": "string"
+      },
+      "level": {
+        "anyOf": [
+          {
+            "enum": [
+              "DEBUG",
+              "INFO",
+              "WARN",
+              "ERROR"
+            ],
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Level"
+      },
+      "limit": {
+        "default": 50,
+        "maximum": 200,
+        "minimum": 1,
+        "title": "Limit",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "service"
+    ],
+    "title": "query_logsArguments"
+  },
+  "output_schema": {
+    "$defs": {
+      "LogRecord": {
+        "properties": {
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "level": {
+            "enum": [
+              "DEBUG",
+              "INFO",
+              "WARN",
+              "ERROR"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "message": {
+            "title": "Mes
+
+=== tool get_service_health ===
+{
+  "title": null,
+  "description": "Current health snapshot for a service (synthetic).",
+  "annotations": {
+    "title": null,
+    "read_only_hint": true,
+    "destructive_hint": null,
+    "idempotent_hint": null,
+    "open_world_hint": null
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "service": {
+        "title": "Service",
+        "type": "string"
+      }
+    },
+    "required": [
+      "service"
+    ],
+    "title": "get_service_healthArguments"
+  },
+  "output_schema": {
+    "additionalProperties": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        }
+      ]
+    },
+    "title": "get_service_healthDictOutput",
+    "type": "object"
+  }
+}
+
+=== call_tool query_logs ok ===
+{
+  "is_error": false,
+  "structured_content": {
+    "evidence_id": "EVD-000001",
+    "service": "checkout-api",
+    "total_matches": 1,
+    "records": [
+      {
+        "timestamp": "2026-09-10T08:01:00Z",
+        "level": "ERROR",
+        "message": "connection pool exhausted"
+      }
+    ],
+    "truncated": false
+  },
+  "content": [
+    "{\n  \"evidence_id\": \"EVD-000001\",\n  \"service\": \"checkout-api\",\n  \"total_matches\": 1,\n  \"records\": [\n    {\n      \"timestamp\": \"2026-09-10T08:01:00Z\",\n      \"level\": \"ERROR\",\n      \"message\": \"connection pool exhausted\"\n    }\n  ],\n  \"truncated\": false\n}"
+  ]
+}
+
+=== call_tool ToolError ===
+{
+  "is_error": true,
+  "structured_content": null,
+  "content": [
+    "Error executing tool query_logs: No such service: 'unknown-svc'"
+  ]
+}
+
+=== call_tool validation error (limit=999) ===
+{
+  "is_error": true,
+  "content": [
+    "Error executing tool query_logs: 1 validation error for query_logsArguments\nlimit\n  Input should be less than or equal to 200 [type=less_than_equal, input_value=999, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/less_than_equal"
+  ]
+}
+
+=== call_tool dict return ===
+{
+  "is_error": false,
+  "structured_content": {
+    "evidence_id": "EVD-000002",
+    "service": "payments-gateway",
+    "status": "degraded",
+    "error_rate": 0.12
+  }
+}
+
+=== unknown tool ===
+{
+  "is_error": true,
+  "content": [
+    "Unknown tool: does_not_exist"
+  ]
+}
+
+=== list_resources ===
+[
+  {
+    "name": "service_catalog",
+    "title": null,
+    "uri": "catalog://services",
+    "description": "List of synthetic services.",
+    "mime_type": "application/json",
+    "size": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null
+  }
+]
+
+=== list_resource_templates ===
+[
+  {
+    "name": "runbook",
+    "title": null,
+    "uri_template": "runbook://{service}/{runbook_id}",
+    "description": "A runbook document.",
+    "mime_type": "application/json",
+    "icons": null,
+    "annotations": null,
+    "meta": null
+  },
+  {
+    "name": "incident",
+    "title": null,
+    "uri_template": "incident://{incident_id}",
+    "description": "Historical incident report (text).",
+    "mime_type": "text/plain",
+    "icons": null,
+    "annotations": null,
+    "meta": null
+  }
+]
+
+=== read_resource catalog ===
+[
+  [
+    "application/json",
+    "{\n  \"services\": [\n    \"checkout-api\",\n    \"payments-gateway\"\n  ]\n}"
+  ]
+]
+
+=== read_resource template ===
+[
+  [
+    "application/json",
+    "{\n  \"runbook_id\": \"RB-001\",\n  \"service\": \"checkout-api\",\n  \"title\": \"Pool exhaustion\",\n  \"body\": \"1. Check pool metrics...\"\n}"
+  ]
+]
+
+=== read_resource not found -> MCPError ===
+code=-32602 No runbook 'RB-999' for 'checkout-api'
+
+######## STDIO subprocess ########
+server_info: name='spike-ops' title=None version='' description=None website_url=None icons=None
+protocol_version: 2026-07-28
+instructions: Read-only synthetic ops environment (spike).
+
+=== tool query_logs ===
+{
+  "title": null,
+  "description": "Search application logs for a service (synthetic).",
+  "annotations": {
+    "title": null,
+    "read_only_hint": true,
+    "destructive_hint": null,
+    "idempotent_hint": null,
+    "open_world_hint": false
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "service": {
+        "description": "Service name",
+        "maxLength": 64,
+        "minLength": 1,
+        "title": "Service",
+        "type": "string"
+      },
+      "level": {
+        "anyOf": [
+          {
+            "enum": [
+              "DEBUG",
+              "INFO",
+              "WARN",
+              "ERROR"
+            ],
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Level"
+      },
+      "limit": {
+        "default": 50,
+        "maximum": 200,
+        "minimum": 1,
+        "title": "Limit",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "service"
+    ],
+    "title": "query_logsArguments"
+  },
+  "output_schema": {
+    "$defs": {
+      "LogRecord": {
+        "properties": {
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "level": {
+            "enum": [
+              "DEBUG",
+              "INFO",
+              "WARN",
+              "ERROR"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "message": {
+            "title": "Mes
+
+=== tool get_service_health ===
+{
+  "title": null,
+  "description": "Current health snapshot for a service (synthetic).",
+  "annotations": {
+    "title": null,
+    "read_only_hint": true,
+    "destructive_hint": null,
+    "idempotent_hint": null,
+    "open_world_hint": null
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "service": {
+        "title": "Service",
+        "type": "string"
+      }
+    },
+    "required": [
+      "service"
+    ],
+    "title": "get_service_healthArguments"
+  },
+  "output_schema": {
+    "additionalProperties": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        }
+      ]
+    },
+    "title": "get_service_healthDictOutput",
+    "type": "object"
+  }
+}Tool 'query_logs' failed: "Error executing tool query_logs: No such service: 'unknown-svc'"
+Tool 'query_logs' rejected arguments: ['limit']
+Tool 'does_not_exist' failed: 'Unknown tool: does_not_exist'
+Resource 'runbook://checkout-api/RB-999' failed: "No runbook 'RB-999' for 'checkout-api'"
+
+
+=== call_tool query_logs ok ===
+{
+  "is_error": false,
+  "structured_content": {
+    "evidence_id": "EVD-000001",
+    "service": "checkout-api",
+    "total_matches": 1,
+    "records": [
+      {
+        "timestamp": "2026-09-10T08:01:00Z",
+        "level": "ERROR",
+        "message": "connection pool exhausted"
+      }
+    ],
+    "truncated": false
+  },
+  "content": [
+    "{\n  \"evidence_id\": \"EVD-000001\",\n  \"service\": \"checkout-api\",\n  \"total_matches\": 1,\n  \"records\": [\n    {\n      \"timestamp\": \"2026-09-10T08:01:00Z\",\n      \"level\": \"ERROR\",\n      \"message\": \"connection pool exhausted\"\n    }\n  ],\n  \"truncated\": false\n}"
+  ]
+}
+
+=== call_tool ToolError ===
+{
+  "is_error": true,
+  "structured_content": null,
+  "content": [
+    "Error executing tool query_logs: No such service: 'unknown-svc'"
+  ]
+}
+
+=== call_tool validation error (limit=999) ===
+{
+  "is_error": true,
+  "content": [
+    "Error executing tool query_logs: 1 validation error for query_logsArguments\nlimit\n  Input should be less than or equal to 200 [type=less_than_equal, input_value=999, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/less_than_equal"
+  ]
+}
+
+=== call_tool dict return ===
+{
+  "is_error": false,
+  "structured_content": {
+    "evidence_id": "EVD-000002",
+    "service": "payments-gateway",
+    "status": "degraded",
+    "error_rate": 0.12
+  }
+}
+
+=== unknown tool ===
+{
+  "is_error": true,
+  "content": [
+    "Unknown tool: does_not_exist"
+  ]
+}
+
+=== list_resources ===
+[
+  {
+    "name": "service_catalog",
+    "title": null,
+    "uri": "catalog://services",
+    "description": "List of synthetic services.",
+    "mime_type": "application/json",
+    "size": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null
+  }
+]
+
+=== list_resource_templates ===
+[
+  {
+    "name": "runbook",
+    "title": null,
+    "uri_template": "runbook://{service}/{runbook_id}",
+    "description": "A runbook document.",
+    "mime_type": "application/json",
+    "icons": null,
+    "annotations": null,
+    "meta": null
+  },
+  {
+    "name": "incident",
+    "title": null,
+    "uri_template": "incident://{incident_id}",
+    "description": "Historical incident report (text).",
+    "mime_type": "text/plain",
+    "icons": null,
+    "annotations": null,
+    "meta": null
+  }
+]
+
+=== read_resource catalog ===
+[
+  [
+    "application/json",
+    "{\n  \"services\": [\n    \"checkout-api\",\n    \"payments-gateway\"\n  ]\n}"
+  ]
+]
+
+=== read_resource template ===
+[
+  [
+    "application/json",
+    "{\n  \"runbook_id\": \"RB-001\",\n  \"service\": \"checkout-api\",\n  \"title\": \"Pool exhaustion\",\n  \"body\": \"1. Check pool metrics...\"\n}"
+  ]
+]
+
+=== read_resource not found -> MCPError ===
+code=-32602 No runbook 'RB-999' for 'checkout-api'

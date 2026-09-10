@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "signalforge"
+version = "0.1.0"
+description = "AI-powered operations investigation over a synthetic operations environment, via the Model Context Protocol"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Nick Reid" }]
+keywords = ["mcp", "model-context-protocol", "incident-investigation", "sre", "ai-agents"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: System :: Monitoring",
+]
+# Direct runtime dependencies only. `pydantic` is declared explicitly because
+# SignalForge imports it directly; it is not relied on as a transitive dependency of `mcp`.
+# Exact versions verified in Phase 1: mcp 2.2.0, mcp-types 2.2.0, pydantic 2.13.5 (see constraints.txt).
+dependencies = [
+  "mcp>=2.2,<3",
+  "pydantic>=2.12,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "anyio>=4.9",
+  "jsonschema>=4",
+  "ruff>=0.6",
+]
+
+[project.scripts]
+signalforge = "signalforge.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"signalforge.world.corpus.runbooks" = ["*.md"]
+"signalforge.world.corpus.incidents" = ["*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q -ra"
+markers = [
+  "stdio: spawns the MCP server as a stdio subprocess",
+  "http: runs the MCP server over Streamable HTTP on a local port",
+]
+filterwarnings = ["error::DeprecationWarning:signalforge.*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["RUF012", "B008", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]

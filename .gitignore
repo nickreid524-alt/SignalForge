@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.coverage
+coverage.xml
+htmlcov/
+
+# Secrets and local config — never commit credentials
+.env
+.env.*
+!.env.example
+
+# Generated local state (world snapshots, audit traces, eval runs)
+*.sqlite
+*.sqlite3
+*.db
+data/generated/
+runs/
+
+# Frontend (Phase 6)
+node_modules/
+web/dist/
+web/.vite/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+/world.json
