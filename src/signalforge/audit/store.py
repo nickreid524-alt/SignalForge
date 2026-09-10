@@ -196,10 +196,11 @@ class TraceStore:
     def record_validation(self, investigation_id: str, round_index: int, *, ok: bool, issues: list[dict[str, Any]],
                           draft: dict[str, Any] | None, parse_error: str | None) -> None:
         errors = sum(1 for i in issues if i.get("severity") == "error")
+        warnings = sum(1 for i in issues if i.get("severity") == "warning")  # info-level notes are not warnings
         with self._conn:
             self._conn.execute(
                 "INSERT OR REPLACE INTO validations VALUES (?,?,?,?,?,?,?,?,?)",
-                (investigation_id, round_index, int(ok), errors, len(issues) - errors, _json(issues),
+                (investigation_id, round_index, int(ok), errors, warnings, _json(issues),
                  _json(draft) if draft is not None else None, redact(parse_error), _now()),
             )
 

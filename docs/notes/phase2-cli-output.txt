@@ -60,36 +60,36 @@ CONCLUSION
 VALIDATION  ok  errors=0 warnings=0 repair_rounds=0
   INFO [G9] evidence: 3 gathered evidence item(s) not cited: EVD-000001, EVD-000002, EVD-000012
 
-USAGE     steps=4 tool_calls=10 resource_reads=1 model_calls=5 duplicates_suppressed=0 rejected=0 elapsed=0.5s
-TRACE ID  inv-inc-2026-0107-05d058c0  (db: runs/phase2-demo.sqlite)
+USAGE     steps=4 tool_calls=10 resource_reads=1 model_calls=5 duplicates_suppressed=0 rejected=0 elapsed=0.4s
+TRACE ID  inv-inc-2026-0107-b5a2835f  (db: runs/phase2-demo.sqlite)
 trace exported to runs\inc-0107.json
 
 
-################ signalforge trace inv-inc-2026-0107-05d058c0 --trace-db runs/phase2-demo.sqlite
-INVESTIGATION inv-inc-2026-0107-05d058c0  incident=INC-2026-0107  provider=scripted-demo (scripted, uses_llm=False)  transport=in-memory
-  status=completed  started=2026-09-10T19:01:40.627548+00:00  ended=2026-09-10T19:01:41.076863+00:00  termination=None  error=None
-  usage={'elapsed_seconds': 0.45, 'model_calls': 5, 'rejected_actions': 0, 'repair_rounds': 0, 'resource_reads': 1, 'steps': 4, 'suppressed_duplicates': 0, 'tool_calls': 10}
+################ signalforge trace inv-inc-2026-0107-b5a2835f --trace-db runs/phase2-demo.sqlite
+INVESTIGATION inv-inc-2026-0107-b5a2835f  incident=INC-2026-0107  provider=scripted-demo (scripted, uses_llm=False)  transport=in-memory
+  status=completed  started=2026-09-10T19:03:17.625469+00:00  ended=2026-09-10T19:03:18.038660+00:00  termination=None  error=None
+  usage={'elapsed_seconds': 0.414, 'model_calls': 5, 'rejected_actions': 0, 'repair_rounds': 0, 'resource_reads': 1, 'steps': 4, 'suppressed_duplicates': 0, 'tool_calls': 10}
 
 STATUS CHANGES
-  2026-09-10T19:01:40.674861Z  created -> seeding  discover tools; read incident queue and topology through MCP
-  2026-09-10T19:01:40.710722Z  seeding -> deliberating  seeded
-  2026-09-10T19:01:40.724014Z  deliberating -> gathering  step 1: 6 requested action(s)
-  2026-09-10T19:01:40.876769Z  gathering -> deliberating  step 1 gathered
-  2026-09-10T19:01:40.884525Z  deliberating -> gathering  step 2: 5 requested action(s)
-  2026-09-10T19:01:40.981769Z  gathering -> deliberating  step 2 gathered
-  2026-09-10T19:01:40.989934Z  deliberating -> gathering  step 3: 1 requested action(s)
-  2026-09-10T19:01:41.017777Z  gathering -> deliberating  step 3 gathered
-  2026-09-10T19:01:41.026670Z  deliberating -> gathering  step 4: 2 requested action(s)
-  2026-09-10T19:01:41.043494Z  gathering -> concluding  playbook complete
-  2026-09-10T19:01:41.059670Z  concluding -> validating  draft 0: 0 error(s)
-  2026-09-10T19:01:41.073536Z  validating -> completed  validated
+  2026-09-10T19:03:17.675598Z  created -> seeding  discover tools; read incident queue and topology through MCP
+  2026-09-10T19:03:17.712992Z  seeding -> deliberating  seeded
+  2026-09-10T19:03:17.725281Z  deliberating -> gathering  step 1: 6 requested action(s)
+  2026-09-10T19:03:17.854980Z  gathering -> deliberating  step 1 gathered
+  2026-09-10T19:03:17.863467Z  deliberating -> gathering  step 2: 5 requested action(s)
+  2026-09-10T19:03:17.954843Z  gathering -> deliberating  step 2 gathered
+  2026-09-10T19:03:17.969331Z  deliberating -> gathering  step 3: 1 requested action(s)
+  2026-09-10T19:03:17.988715Z  gathering -> deliberating  step 3 gathered
+  2026-09-10T19:03:18.000737Z  deliberating -> gathering  step 4: 2 requested action(s)
+  2026-09-10T19:03:18.016435Z  gathering -> concluding  playbook complete
+  2026-09-10T19:03:18.023781Z  concluding -> validating  draft 0: 0 error(s)
+  2026-09-10T19:03:18.038660Z  validating -> completed  validated
 
 MODEL CALLS
-  inv-inc-2026-0107-05d058c0-mc001  step=1  purpose=deliberate  latency=0.0ms  stop=tool_use  error=None
-  inv-inc-2026-0107-05d058c0-mc002  step=2  purpose=deliberate  latency=0.0ms  stop=tool_use  error=None
-  inv-inc-2026-0107-05d058c0-mc003  step=3  purpose=deliberate  latency=0.0ms  stop=tool_use  error=None
-  inv-inc-2026-0107-05d058c0-mc004  step=4  purpose=deliberate  latency=0.0ms  stop=tool_use  error=None
-  inv-inc-2026-0107-05d058c0-mc005  step=4  purpose=report  latency=0.0ms  stop=structured  error=None
+  inv-inc-2026-0107-b5a2835f-mc001  step=1  purpose=deliberate  latency=0.0ms  stop=tool_use  error=None
+  inv-inc-2026-0107-b5a2835f-mc002  step=2  purpose=deliberate  latency=0.0ms  stop=tool_use  error=None
+  inv-inc-2026-0107-b5a2835f-mc003  step=3  purpose=deliberate  latency=0.0ms  stop=tool_use  error=None
+  inv-inc-2026-0107-b5a2835f-mc004  step=4  purpose=deliberate  latency=0.0ms  stop=tool_use  error=None
+  inv-inc-2026-0107-b5a2835f-mc005  step=4  purpose=report  latency=0.0ms  stop=structured  error=None
 
 ACTIONS
   step 1: call_tool            get_service_health     -> EVD-000003  ok=1  args={"as_of": "2026-08-17T10:55:00Z", "node": "notifications"}
@@ -129,7 +129,7 @@ HYPOTHESIS UPDATES
   step 2: H1 refuted   0.06 Mailrelay is degraded and rejecting our traffic
 
 VALIDATION ROUNDS
-  round 0: ok=True errors=0 warnings=1
+  round 0: ok=True errors=0 warnings=0
       INFO [G9] evidence: 3 gathered evidence item(s) not cited: EVD-000001, EVD-000002, EVD-000012
 
 REPORT  status=root_cause_identified confidence=0.86 terminal=completed
@@ -199,8 +199,8 @@ CONCLUSION
 VALIDATION  ok  errors=0 warnings=0 repair_rounds=0
   INFO [G9] evidence: 4 gathered evidence item(s) not cited: EVD-000001, EVD-000002, EVD-000010, EVD-000011
 
-USAGE     steps=3 tool_calls=9 resource_reads=2 model_calls=4 duplicates_suppressed=0 rejected=0 elapsed=0.9s
-TRACE ID  inv-inc-2026-0114-4e241d8c  (db: runs/phase2-demo.sqlite)
+USAGE     steps=3 tool_calls=9 resource_reads=2 model_calls=4 duplicates_suppressed=0 rejected=0 elapsed=0.5s
+TRACE ID  inv-inc-2026-0114-bd88046d  (db: runs/phase2-demo.sqlite)
 
 
 ################ signalforge eval
