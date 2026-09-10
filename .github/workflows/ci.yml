@@ -39,3 +39,23 @@ jobs:
         run: signalforge investigate INC-2026-0114 --transport stdio --trace-db runs/ci.sqlite --json runs/ci-inc-0114.json
       - name: Deterministic evaluation (15 scenarios, scripted provider)
         run: signalforge eval --markdown runs/eval.md
+
+  providers:
+    name: provider adapters (mocked, ubuntu / py3.12)
+    runs-on: ubuntu-latest
+    env:
+      # No vendor credentials exist in CI. Adapter tests use fake SDK clients and recorded cassettes;
+      # nothing here contacts anthropic.com or openai.com.
+      SIGNALFORGE_PROVIDER: scripted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install with both provider extras
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev,providers]"
+      - name: Provider status (must report missing credentials, never fail)
+        run: signalforge providers
+      - name: Full test suite including adapter and contract tests
+        run: pytest -q

@@ -1,0 +1,91 @@
+$ signalforge providers   (no API keys in the environment)
+provider   mode      USES LIVE API  sdk                credentials  model                        ready  note
+scripted   scripted  NO             n/a                n/a          playbook-v1                  yes    deterministic demonstration; no LLM, no network
+replay     replay    NO             n/a                n/a          -                            yes    replays a recorded cassette; no LLM, no network (needs --cassette)
+anthropic  live      YES            installed 1.5.0    missing      -                            no     missing: ANTHROPIC_API_KEY, SIGNALFORGE_ANTHROPIC_MODEL
+openai     live      YES            installed 3.12.0   missing      -                            no     missing: OPENAI_API_KEY, SIGNALFORGE_OPENAI_MODEL
+
+default provider: scripted (SIGNALFORGE_PROVIDER). Live providers need an API key from the vendor's
+developer console: a Claude consumer subscription is not an Anthropic API key, and a ChatGPT subscription is not an OpenAI API key.
+
+$ signalforge provider check anthropic --yes   (no credentials)
+setup error: provider anthropic is not ready (missing: ANTHROPIC_API_KEY, SIGNALFORGE_ANTHROPIC_MODEL). Nothing was called.
+exit code: 2
+
+$ SIGNALFORGE_ANTHROPIC_MODEL=example-model-id ANTHROPIC_API_KEY=<redacted> signalforge investigate INC-2026-0101 --provider anthropic   (no --yes)
+==============================================================================
+LIVE API CONFIRMATION REQUIRED: investigate INC-2026-0101 would call the anthropic API (paid).
+  model: example-model-id   ready: yes
+  Re-run with --yes to confirm. Nothing was called.
+==============================================================================
+exit code: 2
+
+$ signalforge eval --provider openai --yes   (no --allow-live-suite)
+LIVE SUITE GUARD: evaluating all 15 scenarios against a paid API requires --allow-live-suite (or pick one with --scenario SCN-xx). Nothing was called.
+exit code: 2
+
+$ signalforge investigate INC-2026-0106   (default provider: scripted)
+==============================================================================
+SCRIPTED DEMONSTRATION MODE
+No LLM API is being used. Tool calls, hypotheses and the report come from an authored playbook.
+The MCP boundary, evidence registry, grounding validation and audit trace are real.
+USES LIVE API: NO
+==============================================================================
+MCP: connected via in-memory to signalforge-ops v0.1.0 (protocol 2026-07-28)
+
+INCIDENT  INC-2026-0106 - All payment authorisations failing with handshake errors
+          service=payments severity=SEV1 clock=2026-08-14T00:28:00+00:00
+STATUS    completed
+
+STEPS
+  step 1: [scripted demonstration] step 1/3: get_service_health, query_logs, get_deployments, get_service_health, update_hypotheses
+      call_tool            get_service_health -> EVD-000003
+      call_tool            query_logs -> EVD-000004
+      call_tool            get_deployments -> EVD-000005
+      call_tool            get_service_health -> EVD-000006
+      update_hypotheses    update_hypotheses
+  step 2: [scripted demonstration] step 2/3: query_metrics, search_runbooks, search_incidents, update_hypotheses
+      call_tool            query_metrics -> EVD-000007
+      call_tool            search_runbooks -> EVD-000008
+      call_tool            search_incidents -> EVD-000009
+      update_hypotheses    update_hypotheses
+  step 3: [scripted demonstration] step 3/3: read_resource, read_resource, finish_investigation
+      read_resource        runbook://RB-016 -> EVD-000010
+      read_resource        incident://INC-2025-0031 -> EVD-000011
+      finish_investigation finish_investigation
+
+EVIDENCE
+  EVD-000001  resource incidents://open                             records=15  ok=True
+  EVD-000002  resource topology://services/payments                 records=4   ok=True
+  EVD-000003  tool     get_service_health                           records=2   ok=True
+  EVD-000004  tool     query_logs                                   records=20  ok=True
+  EVD-000005  tool     get_deployments                              records=1   ok=True
+  EVD-000006  tool     get_service_health                           records=1   ok=True
+  EVD-000007  tool     query_metrics                                records=1   ok=True
+  EVD-000008  tool     search_runbooks                              records=3   ok=True
+  EVD-000009  tool     search_incidents                             records=3   ok=True
+  EVD-000010  resource runbook://RB-016                             records=1   ok=True
+  EVD-000011  resource incident://INC-2025-0031                     records=1   ok=True
+
+HYPOTHESES (evolution)
+  H1 [supported 0.92] The PayVault mTLS client certificate expired at 2026-08-14T00:00:00Z; every handshake fails with x509 'certifi
+      s1:proposed@0.60 -> s2:supported@0.92
+  H2 [refuted   0.03] Yesterday afternoon's payments release broke the PayVault client
+      s1:proposed@0.25 -> s2:refuted@0.03
+  H3 [refuted   0.02] PayVault is down
+      s1:proposed@0.15 -> s2:refuted@0.02
+
+CONCLUSION
+  status: root_cause_identified   confidence: 0.90
+  primary: H1 [certificate_expiry] The PayVault mTLS client certificate expired at 2026-08-14T00:00:00Z; every handshake fails with x509 'certificate has expired'
+  cites:   EVD-000004, EVD-000007, EVD-000008, EVD-000009
+  summary: All payment authorisations fail because the PayVault mTLS client certificate expired at 2026-08-14T00:00Z. Payments logs report 'x509: certificate has expired' on every handshake, the error rate stepped to 100% at exactly midnight, and PayVault's own status feed is operational. The payments release at 15:30 the previous day is unrelated to the midnight onset. Rotate the certificate per the runbook.
+
+VALIDATION  ok  errors=0 warnings=0 repair_rounds=0
+  INFO [G9] evidence: 2 gathered evidence item(s) not cited: EVD-000001, EVD-000002
+
+USAGE     steps=3 tool_calls=7 resource_reads=2 model_calls=4 duplicates_suppressed=0 rejected=0 elapsed=0.2s
+TOKENS    not reported (provider uses no LLM)
+PROVIDER  scripted-demo (scripted) USES LIVE API: NO
+TRACE ID  inv-inc-2026-0106-fcbfaf3a  (db: runs/phase3-demo.sqlite)
+exit code: 0
