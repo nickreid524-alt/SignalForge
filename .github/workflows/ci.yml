@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / py${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - name: Install
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check src tests
+      - name: Deterministic world generation
+        run: signalforge world stats
+      - name: Tests (unit, in-memory MCP, stdio MCP, streamable HTTP, retrieval, evidence, security)
+        run: pytest -q
+      - name: Engineering demo (in-memory MCP boundary)
+        run: signalforge demo
+      - name: Engineering demo (stdio subprocess)
+        run: signalforge demo --transport stdio --incident INC-2026-0107

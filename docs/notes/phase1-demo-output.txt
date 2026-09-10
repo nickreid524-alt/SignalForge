@@ -1,0 +1,119 @@
+==============================================================================
+SignalForge Phase 1 - ENGINEERING DEMONSTRATION (no AI reasoning involved)
+Exercises: world generation -> MCP server -> MCP client -> tools/resources -> evidence registry
+==============================================================================
+
+[1] World generation
+    SignalForge Demo Commerce | Synthetic Operations Environment | seed=20260910
+    12 services, 12 infra nodes, 29 edges, 136 deployments, 102 config changes, 58 alerts, 22 runbooks, 12 historical incidents
+
+[2] Incident under investigation: INC-2026-0101 - Checkout latency regression after morning deployment
+    affected service: checkout | detected 2026-08-03T08:24:00+00:00 | investigation clock 2026-08-03T08:44:00+00:00
+
+[3] MCP server startup + client connection (transport: in-memory)
+    connected via in-memory: server=signalforge-ops v0.1.0 protocol=2026-07-28
+
+[4] tools/list
+    - get_alerts           read_only=True output_schema_fields=10
+    - get_config_changes   read_only=True output_schema_fields=10
+    - get_dependencies     read_only=True output_schema_fields=13
+    - get_deployments      read_only=True output_schema_fields=10
+    - get_service_health   read_only=True output_schema_fields=11
+    - query_logs           read_only=True output_schema_fields=14
+    - query_metrics        read_only=True output_schema_fields=17
+    - search_incidents     read_only=True output_schema_fields=11
+    - search_runbooks      read_only=True output_schema_fields=11
+    resources: ['catalog://services'] templates: ['incident://{incident_id}', 'runbook://{runbook_id}', 'topology://services/{service}']
+
+[5] Query the incident-related service (checkout) through MCP tools
+    EVD-000001  get_service_health      84.5 ms  ok
+               checkout is degraded at 2026-08-03T08:44Z: p95 latency 2798ms vs typical 192ms; 1 open alert(s).
+    EVD-000002  get_deployments         10.7 ms  ok
+               1 deployment(s) for checkout between 2026-08-03T05:44Z and 2026-08-03T08:44Z: DEP-0038 checkout v2026.08.03-1 @ 2026-08-03T08:09Z.
+    EVD-000003  query_metrics           14.9 ms  ok
+               checkout latency_p95: 36 points, min 178 max 3050 ms, first 178 last 3050; largest step 2703 at 2026-08-03T08:14Z (x15.866).
+    EVD-000004  query_logs              17.1 ms  ok
+               422 matching log lines for checkout between 2026-08-03T05:44Z and 2026-08-03T08:44Z; top patterns: checkout.reserve_fanout x261; checkout.slow_submit 
+
+[6] Search runbooks (lexical BM25 over SQLite FTS5)
+    EVD-000005  search_runbooks         12.9 ms  3 hit(s)
+               #1 RB-001 | Checkout latency triage / Remediation -> runbook://RB-001
+               #2 RB-004 | Rolling back a checkout release / After the rollback -> runbook://RB-004
+               #3 RB-019 | Deployment regression checklist / Anti-patterns -> runbook://RB-019
+
+[7] Read the top returned resource
+    EVD-000006  runbook://RB-001           3.2 ms  1449 chars  # Checkout latency triage
+    EVD-000007  topology resource         0.8 ms  source_ids=['checkout', 'EDGE-checkout-cart', 'EDGE-checkout-identity', 'EDGE-checkout-inventory']...
+
+[8] Evidence registry (investigation-local EVD ids over stable world ids)
+    EVD-000001  seq=1  tool     get_service_health                     records=2   hash=cb24fdc50e9b...  ok=True
+    EVD-000002  seq=2  tool     get_deployments                        records=1   hash=963e411dc3a1...  ok=True
+    EVD-000003  seq=3  tool     query_metrics                          records=1   hash=c07776fef1d9...  ok=True
+    EVD-000004  seq=4  tool     query_logs                             records=5   hash=6769a274d81a...  ok=True
+    EVD-000005  seq=5  tool     search_runbooks                        records=3   hash=885328c70c3d...  ok=True
+    EVD-000006  seq=6  resource runbook://RB-001                       records=1   hash=136c7d1b38dc...  ok=True
+    EVD-000007  seq=7  resource topology://services/checkout           records=8   hash=76ab6202efcf...  ok=True
+    narrowed citation example: EVD-000001#HLT-checkout-20260803T0844
+
+Done. Every result above crossed a real MCP client/server boundary (in-memory); nothing was scripted as 'reasoning'.
+
+
+################ second run: --transport stdio --incident INC-2026-0107 ################
+==============================================================================
+SignalForge Phase 1 - ENGINEERING DEMONSTRATION (no AI reasoning involved)
+Exercises: world generation -> MCP server -> MCP client -> tools/resources -> evidence registry
+==============================================================================
+
+[1] World generation
+    SignalForge Demo Commerce | Synthetic Operations Environment | seed=20260910
+    12 services, 12 infra nodes, 29 edges, 136 deployments, 102 config changes, 58 alerts, 22 runbooks, 12 historical incidents
+
+[2] Incident under investigation: INC-2026-0107 - Emails and SMS not sending; notifications error rate 100%
+    affected service: notifications | detected 2026-08-17T10:35:00+00:00 | investigation clock 2026-08-17T10:55:00+00:00
+
+[3] MCP server startup + client connection (transport: stdio)
+    connected via stdio: server=signalforge-ops v0.1.0 protocol=2026-07-28
+
+[4] tools/list
+    - get_alerts           read_only=True output_schema_fields=10
+    - get_config_changes   read_only=True output_schema_fields=10
+    - get_dependencies     read_only=True output_schema_fields=13
+    - get_deployments      read_only=True output_schema_fields=10
+    - get_service_health   read_only=True output_schema_fields=11
+    - query_logs           read_only=True output_schema_fields=14
+    - query_metrics        read_only=True output_schema_fields=17
+    - search_incidents     read_only=True output_schema_fields=11
+    - search_runbooks      read_only=True output_schema_fields=11
+    resources: ['catalog://services'] templates: ['incident://{incident_id}', 'runbook://{runbook_id}', 'topology://services/{service}']
+
+[5] Query the incident-related service (notifications) through MCP tools
+    EVD-000001  get_service_health      68.6 ms  ok
+               notifications is critical at 2026-08-17T10:55Z: error rate 100.0%; 1 open alert(s).
+    EVD-000002  get_deployments         10.2 ms  ok
+               0 deployment(s) for notifications between 2026-08-17T07:55Z and 2026-08-17T10:55Z.
+    EVD-000003  query_metrics           12.8 ms  ok
+               notifications latency_p95: 36 points, min 336.8 max 380.6 ms, first 353.5 last 359.5; largest step 37.3 at 2026-08-17T08:30Z (x0.9).
+    EVD-000004  query_logs              17.4 ms  ok
+               21 matching log lines for notifications between 2026-08-17T07:55Z and 2026-08-17T10:55Z; top patterns: http.slow_request x15; notifications.circuit_op
+
+[6] Search runbooks (lexical BM25 over SQLite FTS5)
+    EVD-000005  search_runbooks          9.8 ms  3 hit(s)
+               #1 RB-016 | Rotating the PayVault client certificate / Symptoms -> runbook://RB-016
+               #2 RB-009 | Payments error-rate spike / Symptoms -> runbook://RB-009
+               #3 RB-009 | Payments error-rate spike / Remediation -> runbook://RB-009
+
+[7] Read the top returned resource
+    EVD-000006  runbook://RB-016           4.2 ms  1129 chars  # Rotating the PayVault client certificate
+    EVD-000007  topology resource         2.5 ms  source_ids=['notifications', 'EDGE-fulfillment-worker-notifications', 'EDGE-notifications-dns', 'EDGE-notifications-event-bus']...
+
+[8] Evidence registry (investigation-local EVD ids over stable world ids)
+    EVD-000001  seq=1  tool     get_service_health                     records=2   hash=29533132fbe0...  ok=True
+    EVD-000002  seq=2  tool     get_deployments                        records=0   hash=c7852445c0f8...  ok=True
+    EVD-000003  seq=3  tool     query_metrics                          records=1   hash=764618dac5e3...  ok=True
+    EVD-000004  seq=4  tool     query_logs                             records=5   hash=d3aac24796c7...  ok=True
+    EVD-000005  seq=5  tool     search_runbooks                        records=3   hash=7f653937646c...  ok=True
+    EVD-000006  seq=6  resource runbook://RB-016                       records=1   hash=caa834a0c8fc...  ok=True
+    EVD-000007  seq=7  resource topology://services/notifications      records=5   hash=0e1acc0a114b...  ok=True
+    narrowed citation example: EVD-000001#HLT-notifications-20260817T1055
+
+Done. Every result above crossed a real MCP client/server boundary (stdio); nothing was scripted as 'reasoning'.
