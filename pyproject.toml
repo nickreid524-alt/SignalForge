@@ -24,6 +24,9 @@ classifiers = [
 dependencies = [
   "mcp>=2.2,<3",
   "pydantic>=2.12,<3",
+  # Validates provider-requested tool arguments against the MCP input schemas before a call leaves the
+  # orchestrator. Already a transitive dependency of `mcp`; declared because SignalForge imports it directly.
+  "jsonschema>=4,<5",
 ]
 
 [project.optional-dependencies]

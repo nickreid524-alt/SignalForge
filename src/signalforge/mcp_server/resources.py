@@ -28,6 +28,17 @@ def register_resources(mcp: MCPServer, ctx: ServerContext) -> None:
             "data_notice": DATA_NOTICE,
         }
 
+    @mcp.resource("incidents://open", mime_type="application/json",
+                  description="The queue of open incidents awaiting investigation. Contains no cause information.")
+    def open_incident_queue() -> dict[str, Any]:
+        incidents = repo.open_incidents()
+        return {
+            "environment": repo.environment,
+            "source_ids": [i.id for i in incidents],
+            "incidents": [i.model_dump(mode="json") for i in incidents],
+            "data_notice": DATA_NOTICE,
+        }
+
     @mcp.resource("topology://services/{service}", mime_type="application/json",
                   description="Upstream and downstream dependency edges of one service or node.")
     def service_topology(service: str) -> dict[str, Any]:
@@ -85,4 +96,4 @@ def register_resources(mcp: MCPServer, ctx: ServerContext) -> None:
 
 
 RESOURCE_TEMPLATES: tuple[str, ...] = ("topology://services/{service}", "runbook://{runbook_id}", "incident://{incident_id}")
-STATIC_RESOURCES: tuple[str, ...] = ("catalog://services",)
+STATIC_RESOURCES: tuple[str, ...] = ("catalog://services", "incidents://open")

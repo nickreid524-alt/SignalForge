@@ -7,23 +7,10 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-FailureCategory = Literal[
-    "deployment_regression",
-    "db_pool_exhaustion",
-    "memory_leak",
-    "disk_saturation",
-    "queue_backlog",
-    "certificate_expiry",
-    "dns_failure",
-    "cache_failure",
-    "dependency_latency",
-    "config_mistake",
-    "auth_failure",
-    "traffic_spike",
-    "crash_loop",
-    "third_party_degradation",
-    "inconclusive",
-]
+from signalforge.reports.taxonomy import CauseCategory
+
+# Shared, non-secret vocabulary; scenarios reuse the report taxonomy so evaluations compare like with like.
+FailureCategory = CauseCategory
 
 Difficulty = Literal["easy", "medium", "hard"]
 PredicateKind = Literal[

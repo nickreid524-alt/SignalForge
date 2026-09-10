@@ -171,7 +171,7 @@ async def test_unknown_tool_is_a_normalised_failure(client: OpsClient):
 
 async def test_resources_list(client: OpsClient):
     statics = await client.list_resources()
-    assert [r.uri for r in statics] == ["catalog://services"]
+    assert [r.uri for r in statics] == ["catalog://services", "incidents://open"]
     templates = await client.list_resource_templates()
     assert [t.uri_template for t in templates] == sorted(
         ["topology://services/{service}", "runbook://{runbook_id}", "incident://{incident_id}"])
