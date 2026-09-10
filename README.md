@@ -18,9 +18,9 @@ real employer, customer, system or incident.
 | Phase | Scope | State |
 |---|---|---|
 | 0 | Architecture and MCP SDK v2 validation | done |
-| 1 | Synthetic world, MCP server + resources, retrieval, evidence registry, MCP client | in progress |
-| 2 | Investigation loop, deterministic demo provider, grounded reports, audit trace | planned |
-| 3+ | Evaluation harness, live providers, API, web UI | planned |
+| 1 | Synthetic world, MCP server + resources, retrieval, evidence registry, MCP client | done |
+| 2 | Bounded investigation engine, scripted demo provider, grounded reports, audit trace, deterministic evaluation harness | done (under review) |
+| 3+ | Live providers (Anthropic/OpenAI behind the same boundary), API, web UI | planned |
 
 ## Development
 
@@ -29,6 +29,9 @@ python -m venv .venv
 .venv/Scripts/pip install -e ".[dev]"      # Windows; use .venv/bin/pip on POSIX
 pytest
 signalforge demo                          # engineering demonstration of the MCP boundary (no AI)
+signalforge investigate INC-2026-0101     # SCRIPTED DEMONSTRATION MODE: bounded investigation, no LLM API
+signalforge trace --list                  # persisted investigation traces (runs/signalforge.sqlite)
+signalforge eval                          # deterministic evaluation of all 15 scenarios
 signalforge serve-mcp                     # stdio MCP server, e.g. for the MCP Inspector
 ```
 

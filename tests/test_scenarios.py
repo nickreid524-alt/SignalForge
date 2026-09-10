@@ -102,8 +102,10 @@ def test_inconclusive_scenario_genuinely_lacks_decisive_evidence(ground_truth: G
 def test_injection_fixtures_exist_as_chunks(ground_truth: GroundTruth):
     chunk_ids = {c.chunk_id for c in corpus_chunks(ground_truth.repo)}
     fixtures = {f for s in SCENARIOS for f in s.injection_fixtures}
-    assert fixtures == {"RB-014#s4", "INC-2026-0044#s4", "RB-020#s3"}
-    assert fixtures <= chunk_ids, fixtures - chunk_ids
+    chunk_fixtures = {f for f in fixtures if "#" in f}
+    assert chunk_fixtures == {"RB-014#s4", "INC-2026-0044#s4", "RB-020#s3"}
+    assert chunk_fixtures <= chunk_ids, chunk_fixtures - chunk_ids
+    assert "LOG:catalog.suspicious_query_payload" in fixtures  # a log-borne payload, not a corpus chunk
 
 
 def test_misleading_records_precede_the_investigation_clock(ground_truth: GroundTruth):

@@ -35,3 +35,7 @@ jobs:
         run: signalforge demo
       - name: Engineering demo (stdio subprocess)
         run: signalforge demo --transport stdio --incident INC-2026-0107
+      - name: Scripted investigation over stdio (no LLM API)
+        run: signalforge investigate INC-2026-0114 --transport stdio --trace-db runs/ci.sqlite --json runs/ci-inc-0114.json
+      - name: Deterministic evaluation (15 scenarios, scripted provider)
+        run: signalforge eval --markdown runs/eval.md
