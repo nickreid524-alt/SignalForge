@@ -3,7 +3,8 @@
 The audit performed before the repository was proposed for public release, and the checks that now
 run on every commit so it stays true.
 
-Audited 2026-09-11 at commit `678a358` plus the Phase 6 polish.
+Audited 2026-09-11, over the full Phase 6 tree. Commit hashes from before the history rewrite
+described below no longer exist, so this note cites none.
 
 ## What runs automatically
 
@@ -69,3 +70,40 @@ drawn for this project. The screenshots contain no third-party branding.
 names, host names, incident text, runbooks, log lines and metric series are produced by
 `signalforge.world`; none was copied from a real system, and the ground-truth firewall keeps the
 scenario answers out of everything the investigator can reach.
+
+## History rewrite before publication
+
+One directory of internal planning documents was removed from the repository **and from every
+commit in its history**, before the project was ever public. Those four documents were written for
+an audience of one: they compared SignalForge against two other unpublished projects, quoted those
+projects' record and test counts, and described the intended reader and the release milestone in
+terms that framed the whole thing as an exercise rather than a system.
+
+Nothing in them was a secret, and none of it was customer or employer data. They were removed
+because they said things about the project, and about work unrelated to it, that a public reader has
+no reason to see, and because deleting them in a new commit would have left them fully recoverable
+from history.
+
+The rewrite used `git-filter-repo` 2.47.0 while the repository was still private, so the documents
+were never published in any form. Every commit hash therefore changed; the content of the working
+tree did not, apart from this note.
+
+Verification after the rewrite:
+
+- no commit in the published history touches the removed path;
+- no object reachable from it carries one of those documents;
+- every blob in the rewritten history was re-scanned for the document titles and for the names of the
+  unrelated projects the planning notes discussed, and neither survives in any document body;
+- the engineering documentation a reader actually needs is untouched and lives in `docs/notes/`.
+
+What the rewrite deliberately did not do is edit the text of files that survive. Older revisions of
+the README and of this audit still refer to the removed directory by path, and one earlier revision
+of the API boundary note mentions another project by name in an aside about framework choice. Those
+are incidental references in files that remain part of the history, not the planning documents
+themselves, and removing them would mean rewriting the content of unrelated commits. They contain
+nothing confidential.
+
+The temporary local backup branch was itself rewritten by `git-filter-repo`, which rewrites every
+ref in the repository, so it was deleted rather than relied on. The safety net during the operation
+was the remote, which still held the original history until the force-push, and a bundle held outside
+the repository.
