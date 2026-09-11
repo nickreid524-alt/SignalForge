@@ -247,6 +247,11 @@ def test_trace_is_projected_and_redacted(finished):
     assert trace["investigation"]["id"] == investigation_id
     assert trace["status_changes"] and trace["actions"] and trace["evidence"]
     assert trace["model_calls"] and all("response" not in call for call in trace["model_calls"])
+    # flags are real booleans, not SQLite integers, so a typed client can rely on them
+    assert all(isinstance(a["accepted"], bool) for a in trace["actions"])
+    assert all(a["ok"] is None or isinstance(a["ok"], bool) for a in trace["actions"])
+    assert all(isinstance(v["ok"], bool) for v in trace["validations"])
+    assert all(isinstance(e["ok"], bool) for e in trace["evidence"])
     assert all("request_fingerprint" not in call for call in trace["model_calls"])
     body = json.dumps(trace)
     for forbidden in ("opaque", "thinking", "encrypted_content", "reasoning_content", "signature"):

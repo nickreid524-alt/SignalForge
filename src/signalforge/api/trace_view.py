@@ -61,8 +61,11 @@ def safe_trace(bundle: dict[str, Any]) -> dict[str, Any]:
              "reasoning_output_tokens": r.get("reasoning_output_tokens")}
             for r in bundle["model_calls"]
         ],
-        "actions": [_pick(r, "step", "kind", "name", "arguments", "accepted", "rejection_code", "rejection_reason",
-                          "evidence_id", "duplicate_of", "ok", "error", "latency_ms") for r in bundle["actions"]],
+        # SQLite stores flags as integers; a JSON contract should hand a client real booleans.
+        "actions": [{**_pick(r, "step", "kind", "name", "arguments", "rejection_code", "rejection_reason",
+                             "evidence_id", "duplicate_of", "error", "latency_ms"),
+                     "accepted": bool(r["accepted"]),
+                     "ok": None if r.get("ok") is None else bool(r["ok"])} for r in bundle["actions"]],
         "evidence": [{**_pick(r, "evidence_id", "sequence", "acquired_at", "source_kind", "source_name",
                               "arguments", "result_kind", "content_hash", "latency_ms", "error"),
                       "ok": bool(r["ok"]), "source_ids": r.get("source_ids") or [],
