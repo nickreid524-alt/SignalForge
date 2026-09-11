@@ -2,343 +2,282 @@
  * The investigation timeline.
  *
  * This is the screen that has to communicate the architecture in a few seconds: the provider decides
- * what evidence to request, and MCP supplies it. So the four kinds of activity are visually
- * distinct, and an MCP tool call is rendered as an operational command with its arguments, latency
- * and the evidence id it produced, not as a line of chat.
+ * what evidence to request, and MCP supplies it. So an MCP call renders as one operational entry
+ * carrying its request, its outcome and the evidence it produced, rather than three separate rows,
+ * and the four kinds of activity are visually distinct.
  *
  * Every value comes from the real event payload. Nothing here is synthesised for effect.
  */
 
 import type { ReactNode } from "react";
-import { Badge, Latency } from "@/components/primitives";
+import { Badge } from "@/components/primitives";
+import type { TimelineEntry } from "@/app/timelineModel";
+import { buildTimeline } from "@/app/timelineModel";
 import type { InvestigationEvent } from "@/types/api";
 
-type Kind = "mcp" | "resource" | "provider" | "hypothesis" | "lifecycle" | "validation" | "rejected";
+type Kind = "mcp" | "resource" | "provider" | "hypothesis" | "state" | "validation" | "rejected";
 
-const KIND_STYLE: Record<Kind, { label: string; colour: string; bg: string; border: string }> = {
-  mcp: { label: "MCP TOOL", colour: "var(--accent-strong)", bg: "var(--accent-soft)", border: "var(--accent-border)" },
-  resource: { label: "RESOURCE READ", colour: "#4a5b8c", bg: "#eef1fa", border: "#c8d2ea" },
-  provider: { label: "PROVIDER STEP", colour: "#5b636d", bg: "var(--surface-sunken)", border: "var(--border)" },
-  hypothesis: { label: "HYPOTHESIS", colour: "#6b4a8c", bg: "#f4eefa", border: "#dcc8ea" },
-  validation: { label: "VALIDATION", colour: "var(--ok)", bg: "var(--ok-bg)", border: "var(--ok-border)" },
-  rejected: { label: "REFUSED", colour: "var(--danger)", bg: "var(--danger-bg)", border: "var(--danger-border)" },
-  lifecycle: { label: "STATE", colour: "var(--fg-muted)", bg: "transparent", border: "var(--border-hairline)" },
+const KIND: Record<Kind, { label: string; fg: string; bg: string; border: string }> = {
+  mcp: { label: "MCP TOOL", fg: "var(--accent-strong)", bg: "var(--accent-soft)", border: "var(--accent-border)" },
+  resource: { label: "RESOURCE", fg: "#4a5b8c", bg: "#eef1fa", border: "#c8d2ea" },
+  provider: { label: "PROVIDER", fg: "#5b636d", bg: "#eef0f2", border: "#d7dbe0" },
+  hypothesis: { label: "HYPOTHESIS", fg: "#6b4a8c", bg: "#f4eefa", border: "#dcc8ea" },
+  validation: { label: "VALIDATION", fg: "var(--ok)", bg: "var(--ok-bg)", border: "var(--ok-border)" },
+  rejected: { label: "REFUSED", fg: "var(--danger)", bg: "var(--danger-bg)", border: "var(--danger-border)" },
+  state: { label: "STATE", fg: "var(--fg-dim)", bg: "transparent", border: "var(--border-hairline)" },
 };
 
 export function Timeline({ events, onSelectEvidence }: {
   events: InvestigationEvent[];
   onSelectEvidence?: (evidenceId: string) => void;
 }) {
+  const entries = buildTimeline(events);
   return (
-    <ol style={{ listStyle: "none", margin: 0, padding: 0 }} aria-label="Investigation timeline">
-      {events.map((event) => {
-        const entry = render(event, onSelectEvidence);
-        if (!entry) return null;
-        return (
-          <li key={event.seq}>
-            <Entry kind={entry.kind} seq={event.seq} at={event.at} heading={entry.heading} meta={entry.meta}>
-              {entry.body}
-            </Entry>
-          </li>
-        );
-      })}
+    <ol className="tl" aria-label="Investigation timeline">
+      {entries.map((entry) => (
+        <li key={`${entry.kind}-${entry.seq}`}>
+          <Entry entry={entry} onSelectEvidence={onSelectEvidence} />
+        </li>
+      ))}
     </ol>
   );
 }
 
-function Entry({ kind, seq, at, heading, meta, children }: {
+function Entry({ entry, onSelectEvidence }: {
+  entry: TimelineEntry;
+  onSelectEvidence?: (id: string) => void;
+}) {
+  switch (entry.kind) {
+    case "opened":
+      return (
+        <Row kind="state" seq={entry.seq} at={entry.at} quiet
+          heading={<>Investigation opened for <span className="mono">{entry.payload.incident_id}</span></>}
+          meta={<>
+            <Badge>{entry.payload.provider}</Badge>
+            {entry.payload.uses_live_api ? <Badge tone="live">LIVE API</Badge> : <Badge tone="ok">NO LLM</Badge>}
+          </>}
+        />
+      );
+
+    case "status":
+      return (
+        <Row kind="state" seq={entry.seq} at={entry.at} quiet
+          heading={
+            <span className="dim">
+              {entry.payload.from_status} <span aria-hidden="true">→</span>{" "}
+              <span style={{ color: "var(--fg-muted)", fontWeight: 600 }}>{entry.payload.to_status}</span>
+            </span>
+          }
+        />
+      );
+
+    case "step": {
+      const provider = entry.provider;
+      const purpose = provider?.purpose ?? "deliberate";
+      return (
+        <Row kind="provider" seq={entry.seq} at={entry.at}
+          heading={
+            purpose === "deliberate"
+              ? <>Step {entry.step} · provider chose{" "}
+                  <strong>{provider ? provider.tool_requests : "…"}</strong>{" "}
+                  {provider?.tool_requests === 1 ? "action" : "actions"}</>
+              : purpose === "report" ? <>Provider produced the structured report</>
+              : <>Provider revised the report</>
+          }
+          meta={provider && <>
+            {provider.stop_reason && <span className="tl__meta mono">stop {provider.stop_reason}</span>}
+            <span className="tl__meta mono">{formatMs(provider.latency_ms)}</span>
+            {provider.usage_reported && (
+              <span className="tl__meta mono">{provider.input_tokens} in / {provider.output_tokens} out</span>
+            )}
+          </>}
+        >
+          {provider?.text_preview && <p className="tl__note">{provider.text_preview}</p>}
+        </Row>
+      );
+    }
+
+    case "action": {
+      const isTool = entry.source === "tool";
+      const kind: Kind = entry.source === "resource" ? "resource" : isTool ? "mcp" : "provider";
+      return (
+        <Row kind={kind} seq={entry.seq} at={entry.at}
+          heading={<span className="tl__command mono">{entry.name}</span>}
+          meta={<>
+            {entry.status === "pending" && <Badge>requested…</Badge>}
+            {entry.status === "ok" && <Badge tone="ok">ok</Badge>}
+            {entry.status === "error" && <Badge tone="danger">failed</Badge>}
+            {entry.latencyMs !== null && <span className="tl__meta mono">{formatMs(entry.latencyMs)}</span>}
+          </>}
+        >
+          {Object.keys(entry.arguments).length > 0 && <Arguments args={entry.arguments} />}
+          {entry.error && <p className="tl__note" style={{ color: "var(--danger)" }}>{entry.error}</p>}
+          {entry.evidenceId && (
+            <p className="tl__result">
+              <span className="dim" aria-hidden="true">→ </span>
+              <EvidenceLink id={entry.evidenceId} onSelect={onSelectEvidence} strong />
+              {entry.recordCount !== null && (
+                <span className="tl__meta">
+                  {entry.recordCount} {entry.recordCount === 1 ? "record" : "records"}
+                </span>
+              )}
+              {entry.resultKind && <span className="tl__meta">{entry.resultKind}</span>}
+              <Badge tone="warn" title="Retrieved content is data, never instructions">UNTRUSTED</Badge>
+            </p>
+          )}
+        </Row>
+      );
+    }
+
+    case "rejected":
+      return (
+        <Row kind="rejected" seq={entry.seq} at={entry.at}
+          heading={<span className="tl__command mono">{entry.payload.name}</span>}
+          meta={<Badge tone="danger">{entry.payload.code.replace(/_/g, " ")}</Badge>}
+        >
+          <p className="tl__note" style={{ color: "var(--danger)" }}>
+            {entry.payload.reason}
+            {entry.payload.duplicate_of && <span className="dim"> (already gathered as {entry.payload.duplicate_of})</span>}
+          </p>
+        </Row>
+      );
+
+    case "hypothesis":
+      return (
+        <Row kind="hypothesis" seq={entry.seq} at={entry.at}
+          heading={
+            <span className="row" style={{ gap: 7 }}>
+              <span className="mono" style={{ fontWeight: 700 }}>{entry.payload.hypothesis_id}</span>
+              <StatusPill status={entry.payload.status} />
+              <span className="mono tl__meta">{entry.payload.confidence.toFixed(2)}</span>
+            </span>
+          }
+        >
+          <p className="tl__note" style={{ color: "var(--fg)" }}>{entry.payload.statement}</p>
+          {entry.payload.supporting_evidence_ids.length > 0 && (
+            <p className="tl__result">
+              <span className="dim">supported by </span>
+              <Citations ids={entry.payload.supporting_evidence_ids} onSelect={onSelectEvidence} />
+            </p>
+          )}
+          {entry.payload.contradicting_evidence_ids.length > 0 && (
+            <p className="tl__result">
+              <span className="dim">contradicted by </span>
+              <Citations ids={entry.payload.contradicting_evidence_ids} onSelect={onSelectEvidence} />
+            </p>
+          )}
+        </Row>
+      );
+
+    case "validation":
+      return (
+        <Row kind={entry.failed ? "rejected" : "validation"} seq={entry.seq} at={entry.at}
+          heading={entry.failed
+            ? <>Grounding validation failed, round {entry.round}</>
+            : <>Grounding validation, round {entry.round}</>}
+          meta={entry.failed && <>
+            <Badge tone="danger">{entry.errors} error{entry.errors === 1 ? "" : "s"}</Badge>
+            <span className="tl__meta mono">{entry.rules.join(", ")}</span>
+          </>}
+        />
+      );
+
+    case "repair":
+      return (
+        <Row kind="validation" seq={entry.seq} at={entry.at} heading={<>Repair round {entry.payload.round}</>}>
+          <p className="tl__note">{entry.payload.reason}</p>
+        </Row>
+      );
+
+    case "report":
+      return (
+        <Row kind="validation" seq={entry.seq} at={entry.at} heading={<strong>Report completed</strong>}
+          meta={<>
+            <Badge tone={entry.payload.validation_ok ? "ok" : "danger"}>
+              {entry.payload.validation_ok ? "grounding validated" : "validation errors"}
+            </Badge>
+            <span className="tl__meta mono">confidence {entry.payload.confidence.toFixed(2)}</span>
+          </>}
+        />
+      );
+
+    case "finished":
+      return (
+        <Row kind="state" seq={entry.seq} at={entry.at}
+          heading={<strong>Investigation {entry.payload.terminal_status.replace(/_/g, " ")}</strong>}
+          meta={
+            <span className="tl__meta mono">
+              {entry.payload.steps} steps · {entry.payload.tool_calls} tool calls ·{" "}
+              {entry.payload.evidence_count} evidence
+              {entry.payload.rejected_actions > 0 && ` · ${entry.payload.rejected_actions} refused`}
+            </span>
+          }
+        />
+      );
+
+    case "failed":
+      return (
+        <Row kind="rejected" seq={entry.seq} at={entry.at} heading={<strong>Investigation failed</strong>}
+          meta={entry.payload.category && <Badge tone="danger">{entry.payload.category}</Badge>}
+        >
+          <p className="tl__note" style={{ color: "var(--danger)" }}>{entry.payload.message}</p>
+        </Row>
+      );
+  }
+}
+
+function Row({ kind, seq, at, heading, meta, quiet = false, children }: {
   kind: Kind;
   seq: number;
   at: string;
   heading: ReactNode;
   meta?: ReactNode;
+  quiet?: boolean;
   children?: ReactNode;
 }) {
-  const style = KIND_STYLE[kind];
-  const quiet = kind === "lifecycle";
+  const style = KIND[kind];
   return (
-    <div
-      style={{
-        display: "grid", gridTemplateColumns: "86px 1fr", gap: "var(--space-3)",
-        padding: quiet ? "3px var(--space-4)" : "var(--space-3) var(--space-4)",
-        borderBottom: "1px solid var(--border-hairline)",
-        background: quiet ? "transparent" : "var(--surface)",
-      }}
-    >
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 3 }}>
-        <span
-          className="xs"
-          style={{
-            fontWeight: 700, letterSpacing: "0.05em", color: style.colour, background: style.bg,
-            border: `1px solid ${style.border}`, borderRadius: 3, padding: "0 5px", whiteSpace: "nowrap",
-          }}
-        >
+    <div className={`tl__row${quiet ? " tl__row--quiet" : ""}`}>
+      <div className="tl__gutter">
+        <span className="tl__tag" style={{ color: style.fg, background: style.bg, borderColor: style.border }}>
           {style.label}
         </span>
-        <span className="mono dim" style={{ fontSize: 10 }}>
-          #{seq} · {at.slice(11, 19)}
-        </span>
+        <span className="tl__seq mono">#{seq} · {at.slice(11, 19)}</span>
       </div>
-      <div style={{ minWidth: 0 }}>
-        <div className="row row--wrap" style={{ gap: "var(--space-2)" }}>
-          <span style={{ fontWeight: quiet ? 400 : 600, fontSize: quiet ? "var(--text-sm)" : "var(--text-base)" }}>
-            {heading}
-          </span>
+      <div className="tl__body">
+        <div className="tl__head">
+          <span className={quiet ? "tl__heading tl__heading--quiet" : "tl__heading"}>{heading}</span>
           {meta}
         </div>
-        {children && <div style={{ marginTop: 5 }}>{children}</div>}
+        {children}
       </div>
     </div>
   );
 }
 
-interface Rendered {
-  kind: Kind;
-  heading: ReactNode;
-  meta?: ReactNode;
-  body?: ReactNode;
-}
-
-function render(event: InvestigationEvent, onSelectEvidence?: (id: string) => void): Rendered | null {
-  switch (event.type) {
-    case "investigation.created": {
-      const p = event.payload;
-      return {
-        kind: "lifecycle",
-        heading: `Investigation opened for ${p.incident_id}`,
-        meta: (
-          <>
-            <Badge>{p.provider}</Badge>
-            {p.uses_live_api ? <Badge tone="live">LIVE API</Badge> : <Badge tone="ok">NO LLM</Badge>}
-            <Badge>{p.budget_profile} budget</Badge>
-          </>
-        ),
-      };
-    }
-    case "status.changed":
-      return {
-        kind: "lifecycle",
-        heading: (
-          <span className="muted">
-            {event.payload.from_status} <span className="dim">→</span>{" "}
-            <strong style={{ fontWeight: 600 }}>{event.payload.to_status}</strong>
-          </span>
-        ),
-        meta: event.payload.note ? <span className="xs dim">{event.payload.note}</span> : undefined,
-      };
-    case "step.started":
-      return {
-        kind: "lifecycle",
-        heading: <span className="muted">Step {event.payload.step} started</span>,
-        meta: (
-          <span className="xs dim mono">
-            budget left: {Object.entries(event.payload.budget_remaining)
-              .map(([key, value]) => `${key.replace(/_/g, " ")} ${value}`)
-              .join(" · ")}
-          </span>
-        ),
-      };
-    case "provider.completed": {
-      const p = event.payload;
-      return {
-        kind: "provider",
-        heading: p.purpose === "deliberate"
-          ? `Provider chose ${p.tool_requests} action${p.tool_requests === 1 ? "" : "s"}`
-          : p.purpose === "report"
-            ? "Provider produced the structured report"
-            : "Provider revised the report",
-        meta: (
-          <>
-            <span className="xs dim mono">step {p.step}</span>
-            {p.stop_reason && <span className="xs dim mono">stop: {p.stop_reason}</span>}
-            <Latency ms={p.latency_ms} />
-            {p.usage_reported && (
-              <span className="xs dim mono">{p.input_tokens} in / {p.output_tokens} out tokens</span>
-            )}
-          </>
-        ),
-        body: p.text_preview ? <p className="small muted" style={{ margin: 0 }}>{p.text_preview}</p> : undefined,
-      };
-    }
-    case "tool.requested": {
-      const p = event.payload;
-      return {
-        kind: "mcp",
-        heading: <span className="mono" style={{ fontSize: "var(--text-md)" }}>{p.name}</span>,
-        meta: <span className="xs dim mono">requested · step {p.step}</span>,
-        body: <Arguments args={p.arguments} />,
-      };
-    }
-    case "tool.completed": {
-      const p = event.payload;
-      return {
-        kind: "mcp",
-        heading: (
-          <span className="row" style={{ gap: 8 }}>
-            <span className="mono">{p.name}</span>
-            {p.ok ? <Badge tone="ok">completed</Badge> : <Badge tone="danger">failed</Badge>}
-          </span>
-        ),
-        meta: (
-          <>
-            {p.evidence_id && <EvidenceLink id={p.evidence_id} onSelect={onSelectEvidence} />}
-            <Latency ms={p.latency_ms} />
-          </>
-        ),
-        body: p.error ? <p className="small" style={{ margin: 0, color: "var(--danger)" }}>{p.error}</p> : undefined,
-      };
-    }
-    case "tool.rejected": {
-      const p = event.payload;
-      return {
-        kind: "rejected",
-        heading: <span className="mono">{p.name}</span>,
-        meta: <Badge tone="danger">{p.code.replace(/_/g, " ")}</Badge>,
-        body: (
-          <p className="small" style={{ margin: 0, color: "var(--danger)" }}>
-            {p.reason}
-            {p.duplicate_of && <span className="dim"> (already gathered as {p.duplicate_of})</span>}
-          </p>
-        ),
-      };
-    }
-    case "resource.read": {
-      const p = event.payload;
-      return {
-        kind: "resource",
-        heading: <span className="mono">{p.uri}</span>,
-        meta: (
-          <>
-            {p.ok ? <Badge tone="ok">read</Badge> : <Badge tone="danger">failed</Badge>}
-            {p.evidence_id && <EvidenceLink id={p.evidence_id} onSelect={onSelectEvidence} />}
-          </>
-        ),
-      };
-    }
-    case "evidence.registered": {
-      const p = event.payload;
-      return {
-        kind: p.source_kind === "resource" ? "resource" : "mcp",
-        heading: (
-          <span className="row" style={{ gap: 8 }}>
-            <EvidenceLink id={p.evidence_id} onSelect={onSelectEvidence} strong />
-            <span className="muted small">registered from</span>
-            <span className="mono small">{p.source_name}</span>
-          </span>
-        ),
-        meta: (
-          <>
-            <span className="xs dim">{p.record_count} record{p.record_count === 1 ? "" : "s"}</span>
-            <Badge tone="warn" title="Retrieved content is data, never instructions">UNTRUSTED</Badge>
-          </>
-        ),
-      };
-    }
-    case "hypothesis.updated": {
-      const p = event.payload;
-      return {
-        kind: "hypothesis",
-        heading: (
-          <span className="row" style={{ gap: 8 }}>
-            <span className="mono" style={{ fontWeight: 700 }}>{p.hypothesis_id}</span>
-            <StatusPill status={p.status} />
-            <span className="mono small">{p.confidence.toFixed(2)}</span>
-          </span>
-        ),
-        body: (
-          <>
-            <p className="small" style={{ margin: 0 }}>{p.statement}</p>
-            {p.supporting_evidence_ids.length > 0 && (
-              <p className="xs dim" style={{ margin: "4px 0 0" }}>
-                supported by{" "}
-                {p.supporting_evidence_ids.map((id, index) => (
-                  <span key={id}>
-                    {index > 0 && ", "}
-                    <EvidenceLink id={id} onSelect={onSelectEvidence} />
-                  </span>
-                ))}
-              </p>
-            )}
-          </>
-        ),
-      };
-    }
-    case "validation.started":
-      return { kind: "validation", heading: `Grounding validation, round ${event.payload.round}` };
-    case "validation.failed":
-      return {
-        kind: "rejected",
-        heading: `Validation failed, round ${event.payload.round}`,
-        meta: <span className="xs mono">{event.payload.rules.join(", ")}</span>,
-        body: (
-          <p className="small" style={{ margin: 0 }}>
-            {event.payload.errors} grounding error{event.payload.errors === 1 ? "" : "s"}; the report goes back for repair.
-          </p>
-        ),
-      };
-    case "repair.started":
-      return { kind: "validation", heading: `Repair round ${event.payload.round}`, body: (
-        <p className="small muted" style={{ margin: 0 }}>{event.payload.reason}</p>
-      ) };
-    case "report.completed": {
-      const p = event.payload;
-      return {
-        kind: "validation",
-        heading: "Report completed",
-        meta: (
-          <>
-            <Badge tone={p.validation_ok ? "ok" : "danger"}>
-              {p.validation_ok ? "grounding validated" : "validation errors"}
-            </Badge>
-            <span className="mono small">confidence {p.confidence.toFixed(2)}</span>
-          </>
-        ),
-      };
-    }
-    case "investigation.completed": {
-      const p = event.payload;
-      return {
-        kind: "lifecycle",
-        heading: <strong>Investigation {p.terminal_status.replace(/_/g, " ")}</strong>,
-        meta: (
-          <span className="xs dim mono">
-            {p.steps} steps · {p.tool_calls} tool calls · {p.evidence_count} evidence items
-            {p.rejected_actions > 0 && ` · ${p.rejected_actions} refused`}
-          </span>
-        ),
-      };
-    }
-    case "investigation.failed":
-      return {
-        kind: "rejected",
-        heading: <strong>Investigation failed</strong>,
-        meta: event.payload.category ? <Badge tone="danger">{event.payload.category}</Badge> : undefined,
-        body: <p className="small" style={{ margin: 0 }}>{event.payload.message}</p>,
-      };
-    default:
-      return null;
-  }
-}
-
 function Arguments({ args }: { args: Record<string, unknown> }) {
-  const entries = Object.entries(args);
-  if (entries.length === 0) return null;
   return (
-    <dl
-      style={{
-        margin: 0, display: "grid", gridTemplateColumns: "auto 1fr", gap: "1px var(--space-3)",
-        fontSize: "var(--text-sm)",
-      }}
-    >
-      {entries.map(([key, value]) => (
-        <div key={key} style={{ display: "contents" }}>
-          <dt className="xs dim mono" style={{ textAlign: "right" }}>{key}</dt>
-          <dd className="mono" style={{ margin: 0, wordBreak: "break-word" }}>
-            {typeof value === "string" ? value : JSON.stringify(value)}
-          </dd>
+    <dl className="tl__args">
+      {Object.entries(args).map(([key, value]) => (
+        <div key={key} className="tl__arg">
+          <dt className="mono">{key}</dt>
+          <dd className="mono">{typeof value === "string" ? value : JSON.stringify(value)}</dd>
         </div>
       ))}
     </dl>
+  );
+}
+
+function Citations({ ids, onSelect }: { ids: string[]; onSelect?: (id: string) => void }) {
+  return (
+    <>
+      {ids.map((id, index) => (
+        <span key={id}>
+          {index > 0 && <span className="dim">, </span>}
+          <EvidenceLink id={id} onSelect={onSelect} />
+        </span>
+      ))}
+    </>
   );
 }
 
@@ -349,18 +288,13 @@ export function EvidenceLink({ id, onSelect, strong = false }: {
 }) {
   // Citations may be narrowed to one record: EVD-000004#DEP-0038 points at DEP-0038 inside EVD-000004.
   const base = id.split("#")[0] ?? id;
-  if (!onSelect) return <span className="mono small">{id}</span>;
+  if (!onSelect) return <span className="mono evd">{id}</span>;
   return (
     <button
       type="button"
-      className="mono"
+      className={strong ? "evd evd--link evd--strong mono" : "evd evd--link mono"}
       onClick={() => onSelect(base)}
       title={`Open evidence ${base}`}
-      style={{
-        background: "none", border: "none", padding: 0, color: "var(--accent)",
-        fontSize: strong ? "var(--text-base)" : "var(--text-sm)", fontWeight: strong ? 700 : 500,
-        textDecoration: "underline", textUnderlineOffset: 2,
-      }}
     >
       {id}
     </button>
@@ -375,16 +309,11 @@ export function StatusPill({ status }: { status: string }) {
     refuted: "var(--h-refuted)",
     inconclusive: "var(--h-proposed)",
   };
-  return (
-    <span
-      className="xs"
-      style={{
-        fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase",
-        color: colour[status] ?? "var(--fg-muted)", border: `1px solid currentColor`,
-        borderRadius: 3, padding: "0 5px", opacity: 0.95,
-      }}
-    >
-      {status}
-    </span>
-  );
+  return <span className="pill" style={{ color: colour[status] ?? "var(--fg-muted)" }}>{status}</span>;
+}
+
+function formatMs(ms: number): string {
+  if (ms < 1) return "<1 ms";
+  if (ms < 1000) return `${Math.round(ms)} ms`;
+  return `${(ms / 1000).toFixed(1)} s`;
 }

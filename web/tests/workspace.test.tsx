@@ -62,10 +62,10 @@ describe("InvestigationPage", () => {
     await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
     await playWhileRunning(FakeEventSource.latest());
 
-    // MCP tool activity is visible as such.
+    // Each kind of activity is visually distinct and labelled.
     await waitFor(() => expect(screen.getAllByText("MCP TOOL").length).toBeGreaterThan(0));
-    expect(screen.getAllByText("PROVIDER STEP").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("RESOURCE READ").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("PROVIDER").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("RESOURCE").length).toBeGreaterThan(0);
     expect(screen.getAllByText("HYPOTHESIS").length).toBeGreaterThan(0);
 
     // Hypotheses evolve.
@@ -77,16 +77,18 @@ describe("InvestigationPage", () => {
     expect(screen.getAllByText("UNTRUSTED").length).toBeGreaterThan(0);
   });
 
-  it("renders one entry per event, in order", async () => {
+  it("renders entries in sequence order", async () => {
     stubApi();
     renderWorkspace();
     await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
     await playWhileRunning(FakeEventSource.latest());
 
-    await waitFor(() => expect(screen.getByText(`${EVENTS.length - 1} events`)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(new RegExp(`${EVENTS.length - 1} events`))).toBeInTheDocument());
     const marks = screen.getAllByText(/^#\d+ · /).map((node) => Number(node.textContent!.match(/#(\d+)/)![1]));
     expect(marks).toEqual([...marks].sort((a, b) => a - b));
     expect(marks[0]).toBe(1);
+    // Grouping means fewer rows than events: one MCP call is one entry, not three.
+    expect(marks.length).toBeLessThan(EVENTS.length - 1);
   });
 
   it("switches to the report when the investigation completes, with working citations", async () => {
@@ -144,18 +146,27 @@ describe("InvestigationPage", () => {
 });
 
 describe("Timeline", () => {
-  it("shows an MCP tool call as a command with its arguments and evidence id", () => {
+  it("renders one MCP call as a single entry carrying request, outcome and evidence", () => {
+    // The API emits three events for one tool call; the timeline must show one row, not three.
     const requested = EVENTS.find((e) => e.type === "tool.requested")!;
-    const completed = EVENTS.find((e) => e.type === "tool.completed")!;
-    renderRoute(<Timeline events={[requested, completed]} />);
+    const requestId = (requested.payload as { request_id: string }).request_id;
+    const registered = EVENTS.find((e) => e.type === "evidence.registered" && e.seq > requested.seq)!;
+    const completed = EVENTS.find((e) => e.type === "tool.completed"
+      && (e.payload as { request_id: string }).request_id === requestId)!;
 
+    renderRoute(<Timeline events={[requested, registered, completed]} onSelectEvidence={() => {}} />);
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
     const name = (requested.payload as { name: string }).name;
-    expect(screen.getAllByText(name).length).toBeGreaterThan(0);
+    expect(screen.getByText(name)).toBeInTheDocument();
     for (const [key, value] of Object.entries((requested.payload as { arguments: Record<string, unknown> }).arguments)) {
       expect(screen.getByText(key)).toBeInTheDocument();
       expect(screen.getByText(typeof value === "string" ? value : JSON.stringify(value))).toBeInTheDocument();
     }
-    expect(screen.getByText("completed")).toBeInTheDocument();
+    expect(screen.getByText("ok")).toBeInTheDocument();
+    const evidenceId = (completed.payload as { evidence_id: string }).evidence_id;
+    expect(screen.getByRole("button", { name: evidenceId })).toBeInTheDocument();
+    expect(screen.getByText("UNTRUSTED")).toBeInTheDocument();
   });
 
   it("marks a refused action distinctly", () => {
@@ -193,7 +204,9 @@ describe("TraceView", () => {
     for (const forbidden of ["opaque", "encrypted_content", "redacted_thinking"]) {
       expect(text).not.toContain(forbidden);
     }
-    expect(screen.getByText(/State transitions/)).toBeInTheDocument();
-    expect(screen.getByText(/Provider calls/)).toBeInTheDocument();
+    // The trace summarises usage and then lists each section; both mention provider calls.
+    expect(screen.getByText(/State transitions \(/)).toBeInTheDocument();
+    expect(screen.getByText(/Provider calls \(/)).toBeInTheDocument();
+    expect(screen.getByText(/Requested actions \(/)).toBeInTheDocument();
   });
 });

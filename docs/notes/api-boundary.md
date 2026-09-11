@@ -32,7 +32,7 @@ The reasoning:
 - FastAPI's value is dependency injection, automatic OpenAPI and request-model binding. This API has
   eighteen endpoints, one request body and a validation layer that is deliberately explicit, so that
   value is small. Its cost is a large framework, a new major dependency, and a second opinionated way
-  to express the same routing. Another project using FastAPI is not a reason.
+  to express the same routing. Familiarity with it elsewhere is not a reason to add it here.
 - Pydantic already models every domain object in the project, so request and response schemas reuse
   the models rather than introducing a second serialization stack.
 - `sse-starlette` supplies `EventSourceResponse`: correct content type, keep-alive pings and client

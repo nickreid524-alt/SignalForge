@@ -8,30 +8,54 @@
 import { Badge, Collapsible, JsonBlock, Latency, Panel } from "@/components/primitives";
 import type { InvestigationTrace } from "@/types/api";
 
+const USAGE_LABELS: [string, string][] = [
+  ["steps", "Steps"],
+  ["tool_calls", "MCP tool calls"],
+  ["resource_reads", "Resource reads"],
+  ["model_calls", "Provider calls"],
+  ["rejected_actions", "Refused actions"],
+  ["suppressed_duplicates", "Duplicates suppressed"],
+  ["repair_rounds", "Repair rounds"],
+];
+
 export function TraceView({ trace }: { trace: InvestigationTrace }) {
   const inv = trace.investigation;
+  const usage = inv.usage ?? {};
   return (
     <div className="stack">
       <Panel title="Observable investigation trace">
-        <p className="small muted" style={{ margin: "0 0 var(--space-3)" }}>{trace.notice}</p>
-        <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "auto 1fr", gap: "5px var(--space-4)", fontSize: "var(--text-sm)" }}>
-          <dt className="dim">Provider</dt>
-          <dd className="mono" style={{ margin: 0 }}>
-            {inv.provider_name} ({inv.provider_mode}) · model {inv.provider_model ?? "—"} · uses LLM {String(inv.uses_llm)}
-          </dd>
-          <dt className="dim">MCP transport</dt>
-          <dd className="mono" style={{ margin: 0 }}>{inv.transport}</dd>
-          <dt className="dim">Window</dt>
-          <dd className="mono" style={{ margin: 0 }}>{inv.started_at} → {inv.ended_at ?? "running"}</dd>
-          {inv.usage && (
-            <>
-              <dt className="dim">Usage</dt>
-              <dd className="mono" style={{ margin: 0 }}>
-                {Object.entries(inv.usage).map(([key, value]) => `${key.replace(/_/g, " ")} ${value}`).join(" · ")}
-              </dd>
-            </>
-          )}
-        </dl>
+        <p className="small muted" style={{ margin: "0 0 var(--space-4)", maxWidth: "76ch", lineHeight: 1.6 }}>
+          {trace.notice}
+        </p>
+
+        <div className="grid-3" style={{ gap: "var(--space-3) var(--space-5)", marginBottom: "var(--space-4)" }}>
+          <Fact label="Provider">
+            {inv.provider_name} <span className="dim">({inv.provider_mode})</span>
+          </Fact>
+          <Fact label="Model">{inv.provider_model ?? "—"}</Fact>
+          <Fact label="Uses a language model">{inv.uses_llm ? "yes" : "no"}</Fact>
+          <Fact label="MCP transport">{inv.transport}</Fact>
+          <Fact label="Started">{clock(inv.started_at)}</Fact>
+          <Fact label="Ended">{inv.ended_at ? clock(inv.ended_at) : "running"}</Fact>
+        </div>
+
+        <div className="row row--wrap" style={{ gap: "var(--space-5)", paddingTop: "var(--space-3)",
+          borderTop: "1px solid var(--border-hairline)" }}>
+          {USAGE_LABELS.filter(([key]) => usage[key] !== undefined).map(([key, label]) => (
+            <span key={key}>
+              <span className="mono" style={{ fontSize: "var(--text-lg)", fontWeight: 600 }}>{usage[key]}</span>
+              <span className="xs dim" style={{ display: "block" }}>{label}</span>
+            </span>
+          ))}
+          <span>
+            <span className="mono" style={{ fontSize: "var(--text-lg)", fontWeight: 600 }}>
+              {usage.tokens_reported ? `${usage.input_tokens ?? 0} / ${usage.output_tokens ?? 0}` : "n/a"}
+            </span>
+            <span className="xs dim" style={{ display: "block" }}>
+              {usage.tokens_reported ? "Tokens in / out" : "Tokens (no language model)"}
+            </span>
+          </span>
+        </div>
       </Panel>
 
       <Panel title={`State transitions (${trace.status_changes.length})`} flush>
@@ -169,4 +193,19 @@ export function TraceView({ trace }: { trace: InvestigationTrace }) {
       </Panel>
     </div>
   );
+}
+
+function Fact({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="xs dim">{label}</div>
+      <div className="mono small" style={{ marginTop: 1 }}>{children}</div>
+    </div>
+  );
+}
+
+/** Trace timestamps carry microseconds; a reader needs the time, not the precision. */
+function clock(iso: string): string {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? iso : `${date.toISOString().slice(0, 19).replace("T", " ")}Z`;
 }

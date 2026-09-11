@@ -27,7 +27,8 @@ test("a scripted investigation runs end to end and its conclusion is traceable",
   // The workspace opens on the live timeline.
   await expect(page).toHaveURL(/\/investigations\/inv-inc-2026-0101-/);
   await expect(page.getByText("MCP TOOL").first()).toBeVisible();
-  await expect(page.getByText("PROVIDER STEP").first()).toBeVisible();
+  await expect(page.getByText("PROVIDER", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("RESOURCE", { exact: true }).first()).toBeVisible();
 
   // Evidence and hypotheses build up from the stream.
   await expect(page.getByText(/^EVD-000003/).first()).toBeVisible();

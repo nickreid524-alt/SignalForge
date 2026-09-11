@@ -10,17 +10,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getEvidenceList, getInvestigation, getReport, getTrace } from "@/api/client";
-import { Badge, Banner, Duration, EmptyState, Loading, Panel } from "@/components/primitives";
+import { Badge, Banner, Duration, EmptyState, Loading, Panel, Severity } from "@/components/primitives";
 import { ErrorState } from "@/components/ErrorState";
 import { EvidenceDetailView, EvidenceList } from "@/components/EvidencePanel";
 import { HypothesisBoard } from "@/components/HypothesisBoard";
 import { evidenceFromEvents, hypothesesFromEvents, recordCounts } from "@/app/fromEvents";
+import { buildTimeline, countMcpCalls } from "@/app/timelineModel";
 import { ReportView } from "@/components/ReportView";
 import { Timeline } from "@/components/Timeline";
 import { TraceView } from "@/components/TraceView";
 import { usePolledResource, useResource } from "@/hooks/useApi";
 import { useInvestigationStream } from "@/hooks/useInvestigationStream";
-import type { EvidenceSummary, InvestigationDetail, InvestigationEvent } from "@/types/api";
+import type { EvidenceSummary, IncidentSummary, InvestigationDetail, InvestigationEvent } from "@/types/api";
 
 type Tab = "timeline" | "report" | "trace";
 
@@ -58,6 +59,7 @@ export function InvestigationPage() {
   }, [stream.events, detail.data]);
 
   const liveEvidence = useLiveEvidence(stream.events, evidence.data?.evidence ?? []);
+  const mcpCalls = useMemo(() => countMcpCalls(buildTimeline(stream.events)), [stream.events]);
 
   if (detail.error && !detail.data) {
     return <div className="page"><ErrorState error={detail.error} onRetry={detail.reload} /></div>;
@@ -104,6 +106,7 @@ export function InvestigationPage() {
           <Panel title="Investigation">
             {data ? <StateSummary data={data} /> : <Loading rows={5} />}
           </Panel>
+          {data?.incident && <IncidentCard incident={data.incident} />}
         </div>
 
         <div className="stack">
@@ -133,7 +136,9 @@ export function InvestigationPage() {
             }
             actions={
               tab === "timeline" ? (
-                <span className="xs dim mono">{stream.events.length} events</span>
+                <span className="xs dim mono">
+                  {mcpCalls} MCP call{mcpCalls === 1 ? "" : "s"} · {stream.events.length} events
+                </span>
               ) : undefined
             }
             flush
@@ -203,6 +208,32 @@ function useLiveEvidence(events: InvestigationEvent[], loaded: EvidenceSummary[]
       source_ids: Array.from({ length: counts.get(row.evidence_id) ?? 0 }, () => ""),
     }));
   }, [events, loaded]);
+}
+
+/** The incident under investigation, kept beside the timeline so the question stays in view. */
+function IncidentCard({ incident }: { incident: IncidentSummary }) {
+  return (
+    <Panel title="Incident">
+      <div className="stack stack--tight">
+        <div className="row row--wrap" style={{ gap: "var(--space-2)" }}>
+          <Severity value={incident.severity} />
+          <span className="mono small">{incident.affected_service}</span>
+        </div>
+        <p className="small" style={{ margin: 0, lineHeight: 1.5 }}>{incident.title}</p>
+        <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "auto 1fr", gap: "3px var(--space-3)",
+          fontSize: "var(--text-xs)" }}>
+          <dt className="dim">Incident</dt>
+          <dd className="mono" style={{ margin: 0 }}>{incident.id}</dd>
+          <dt className="dim">Detected</dt>
+          <dd className="mono" style={{ margin: 0 }}>{incident.detected_at.slice(0, 16).replace("T", " ")}Z</dd>
+          <dt className="dim">Clock</dt>
+          <dd className="mono" style={{ margin: 0 }}>{incident.investigation_clock.slice(0, 16).replace("T", " ")}Z</dd>
+          <dt className="dim">Reporter</dt>
+          <dd className="mono" style={{ margin: 0 }}>{incident.reporter}</dd>
+        </dl>
+      </div>
+    </Panel>
+  );
 }
 
 function StateSummary({ data }: { data: InvestigationDetail }) {
