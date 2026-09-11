@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -87,9 +88,12 @@ class TraceStore:
         self.path = str(path)
         if self.path != ":memory:":
             Path(self.path).parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(self.path)
+        # check_same_thread=False plus an explicit lock: one store is shared by the API's event loop
+        # and whichever thread built it (test client, embedded server). Writes stay serialised.
+        self._conn = sqlite3.connect(self.path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
-        with self._conn:
+        self._lock = threading.Lock()
+        with self._lock, self._conn:
             self._conn.executescript(_SCHEMA)
             row = self._conn.execute("SELECT MAX(version) AS v FROM schema_version").fetchone()
             if row["v"] is None:
@@ -97,19 +101,22 @@ class TraceStore:
             elif row["v"] != SCHEMA_VERSION:
                 raise RuntimeError(f"trace store schema version {row['v']} != supported {SCHEMA_VERSION}")
         self._seq: dict[tuple[str, str], int] = {}
+        self._seq_lock = threading.Lock()
 
     def close(self) -> None:
-        self._conn.close()
+        with self._lock:
+            self._conn.close()
 
     def _next(self, investigation_id: str, table: str) -> int:
-        key = (investigation_id, table)
-        self._seq[key] = self._seq.get(key, 0) + 1
-        return self._seq[key]
+        with self._seq_lock:
+            key = (investigation_id, table)
+            self._seq[key] = self._seq.get(key, 0) + 1
+            return self._seq[key]
 
     # ------------------------------------------------------------------ writes
     def start_investigation(self, *, investigation_id: str, incident_id: str, provider: dict[str, Any],
                             transport: str, budget: dict[str, Any]) -> None:
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute(
                 "INSERT INTO investigations (id, incident_id, provider_name, provider_model, provider_mode, uses_llm, transport,"
                 " started_at, status, budget_json) VALUES (?,?,?,?,?,?,?,?,?,?)",
@@ -118,11 +125,11 @@ class TraceStore:
             )
 
     def record_incident(self, investigation_id: str, incident: dict[str, Any]) -> None:
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute("UPDATE investigations SET incident_json = ? WHERE id = ?", (_json(incident), investigation_id))
 
     def record_status_change(self, investigation_id: str, change: dict[str, Any]) -> None:
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute(
                 "INSERT INTO status_changes VALUES (?,?,?,?,?,?)",
                 (investigation_id, self._next(investigation_id, "status_changes"), str(change["at"]), change["from_status"],
@@ -130,7 +137,7 @@ class TraceStore:
             )
 
     def record_step(self, investigation_id: str, step: dict[str, Any]) -> None:
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute(
                 "INSERT OR REPLACE INTO steps VALUES (?,?,?,?,?,?,?)",
                 (investigation_id, step["step"], str(step["started_at"]), str(step.get("ended_at")) if step.get("ended_at") else None,
@@ -138,7 +145,7 @@ class TraceStore:
             )
 
     def record_model_call(self, investigation_id: str, call: dict[str, Any]) -> None:
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute(
                 "INSERT INTO model_calls VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (call["id"], investigation_id, call.get("step"), call["purpose"], call.get("provider_name"),
@@ -150,7 +157,7 @@ class TraceStore:
             )
 
     def record_action(self, investigation_id: str, step: int, outcome: dict[str, Any]) -> None:
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute(
                 "INSERT INTO actions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (investigation_id, step, self._next(investigation_id, f"actions:{step}"), outcome.get("request_id"), outcome["kind"],
@@ -161,7 +168,7 @@ class TraceStore:
             )
 
     def record_evidence(self, investigation_id: str, item: dict[str, Any]) -> None:
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute(
                 "INSERT OR REPLACE INTO evidence VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (investigation_id, item["evidence_id"], item["sequence"], str(item["acquired_at"]), item["source_kind"],
@@ -172,7 +179,7 @@ class TraceStore:
             )
 
     def record_hypothesis(self, investigation_id: str, step: int, hypothesis: dict[str, Any], note: str = "") -> None:
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute(
                 "INSERT INTO hypothesis_updates VALUES (?,?,?,?,?,?,?,?,?,?)",
                 (investigation_id, self._next(investigation_id, "hypothesis_updates"), step, hypothesis["id"],
@@ -185,7 +192,7 @@ class TraceStore:
                           draft: dict[str, Any] | None, parse_error: str | None) -> None:
         errors = sum(1 for i in issues if i.get("severity") == "error")
         warnings = sum(1 for i in issues if i.get("severity") == "warning")  # info-level notes are not warnings
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute(
                 "INSERT OR REPLACE INTO validations VALUES (?,?,?,?,?,?,?,?,?)",
                 (investigation_id, round_index, int(ok), errors, warnings, _json(issues),
@@ -193,17 +200,17 @@ class TraceStore:
             )
 
     def record_repair(self, investigation_id: str, round_index: int, request_text: str) -> None:
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute("INSERT OR REPLACE INTO repairs VALUES (?,?,?,?)",
                                (investigation_id, round_index, redact(request_text), _now()))
 
     def record_report(self, investigation_id: str, report: dict[str, Any]) -> None:
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute("INSERT OR REPLACE INTO reports VALUES (?,?,?)", (investigation_id, _json(report), _now()))
 
     def finish_investigation(self, investigation_id: str, *, status: str, termination_reason: str | None,
                              usage: dict[str, Any], error: str | None) -> None:
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute(
                 "UPDATE investigations SET ended_at = ?, status = ?, termination_reason = ?, usage_json = ?, error = ? WHERE id = ?",
                 (_now(), status, termination_reason, _json(usage), redact(error), investigation_id),
@@ -211,7 +218,8 @@ class TraceStore:
 
     # ------------------------------------------------------------------ reads
     def _rows(self, sql: str, params: tuple) -> list[dict[str, Any]]:
-        return [dict(r) for r in self._conn.execute(sql, params).fetchall()]
+        with self._lock:
+            return [dict(r) for r in self._conn.execute(sql, params).fetchall()]
 
     def list_investigations(self) -> list[dict[str, Any]]:
         return self._rows("SELECT id, incident_id, provider_name, provider_mode, status, started_at, ended_at, termination_reason "

@@ -9,6 +9,8 @@
     signalforge investigate INC-2026-0101 [--provider scripted|replay|anthropic|openai] [--yes] [--json trace.json]
     signalforge trace <investigation-id> [--json out.json] | trace --list
     signalforge eval [--scenario SCN-01] [--provider ...] [--yes] [--allow-live-suite] [--json out.json]
+    signalforge serve [--host 127.0.0.1] [--port 8765]      # local HTTP API + SSE investigation stream
+    signalforge api-demo [--incident INC-2026-0114]         # drive the local API over real HTTP
 
 The default provider is `scripted` (SCRIPTED DEMONSTRATION MODE - no LLM API). Live providers call PAID
 APIs and require --yes; a multi-scenario live evaluation additionally requires --allow-live-suite.
@@ -513,6 +515,56 @@ def cmd_eval(args: argparse.Namespace) -> int:
     return 0 if summary.aggregates["passed"] == summary.aggregates["scenarios"] else 1
 
 
+# ---------------------------------------------------------------------- local API (Phase 4)
+
+
+def cmd_serve_api(args: argparse.Namespace) -> int:
+    import uvicorn
+
+    from signalforge.api.app import create_app
+    from signalforge.api.config import ApiSettings
+
+    base = ApiSettings.from_env()
+    settings = ApiSettings(
+        host=args.host or base.host, port=args.port or base.port, cors_origins=base.cors_origins,
+        max_concurrency=args.max_concurrency or base.max_concurrency, max_queued=base.max_queued,
+        allow_live_providers=base.allow_live_providers, trace_db=args.trace_db or base.trace_db,
+        event_db=args.event_db or base.event_db,
+    )
+    live = settings.allow_live_providers
+    _print("=" * 78)
+    _print("SignalForge local API")
+    _print(f"{ENVIRONMENT_NAME} - {DATASET_LABEL}")
+    _print("Provider default: scripted (SCRIPTED DEMONSTRATION MODE - no LLM API)")
+    _print(f"Live API access: {'ENABLED by SIGNALFORGE_API_ALLOW_LIVE' if live else 'disabled'}")
+    _print(f"USES LIVE API: {'YES' if live else 'NO'}")
+    if live:
+        for status in all_provider_statuses():
+            if status.uses_live_api:
+                _print(f"  {status.name}: configured={'yes' if status.ready else 'no'}  model={status.model or '(not set)'}")
+    _print(f"CORS origins: {', '.join(settings.cors_origins) if settings.cors_origins else '(none; same-origin only)'}")
+    _print(f"Concurrency: {settings.max_concurrency} investigation(s) at a time, queue limit {settings.max_queued}")
+    if settings.binds_publicly:
+        _print(f"WARNING: binding {settings.host} exposes this API beyond this machine.")
+    _print(f"Listening on http://{settings.host}:{settings.port}")
+    _print("=" * 78)
+    uvicorn.run(create_app(settings=settings), host=settings.host, port=settings.port, log_level=args.log_level)
+    return 0
+
+
+def cmd_api_demo(args: argparse.Namespace) -> int:
+    from signalforge.api.demo import run_demo
+
+    transcript = run_demo(incident_id=args.incident, deterministic=args.deterministic)
+    if args.out:
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(transcript.text, encoding="utf-8")
+        _print("")
+        _print(f"wrote {out}")
+    return 0
+
+
 # ---------------------------------------------------------------------- parser
 
 
@@ -601,6 +653,21 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate.add_argument("--markdown", help="write a Markdown results table to this file")
     _add_budget_flags(evaluate)
     evaluate.set_defaults(func=cmd_eval)
+
+    serve_api = sub.add_parser("serve", help="run the local HTTP API (investigations, SSE events, evidence, reports)")
+    serve_api.add_argument("--host", default=None, help="default 127.0.0.1; binding elsewhere exposes the API")
+    serve_api.add_argument("--port", type=int, default=None, help="default 8765")
+    serve_api.add_argument("--max-concurrency", type=int, default=None)
+    serve_api.add_argument("--trace-db", default=None)
+    serve_api.add_argument("--event-db", default=None)
+    serve_api.add_argument("--log-level", default="warning", choices=["critical", "error", "warning", "info", "debug"])
+    serve_api.set_defaults(func=cmd_serve_api)
+
+    api_demo = sub.add_parser("api-demo", help="drive the local API over real HTTP (no frontend, no LLM API)")
+    api_demo.add_argument("--incident", default="INC-2026-0114")
+    api_demo.add_argument("--deterministic", action="store_true", help="mask ids and ports so the transcript is stable")
+    api_demo.add_argument("--out", help="also write the transcript to this file")
+    api_demo.set_defaults(func=cmd_api_demo)
     return parser
 
 
