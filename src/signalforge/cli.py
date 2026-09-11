@@ -268,9 +268,8 @@ async def _provider_check(args: argparse.Namespace) -> int:
     if not status.uses_live_api:
         _print(f"{name}: USES LIVE API: NO - nothing to check ({status.note}).")
         return 0
-    if not status.ready:
-        _print(f"setup error: provider {name} is not ready ({status.note}). Nothing was called.")
-        return 2
+    # Confirmation before readiness: a missing --yes must be answered the same way whether or not the
+    # vendor SDK happens to be installed. _live_guard runs the readiness check once --yes is given.
     guard = _live_guard(name, args.yes, what="provider check")
     if guard is not None:
         return guard
@@ -479,13 +478,15 @@ def cmd_eval(args: argparse.Namespace) -> int:
 
     scenario_ids = [args.scenario] if args.scenario else None
     if args.provider in LIVE_PROVIDERS:
-        guard = _live_guard(args.provider, args.yes, what=f"eval ({args.scenario or 'all 15 scenarios'})")
-        if guard is not None:
-            return guard
+        # Pure argument guard before any environment validation: a multi-scenario paid run is refused
+        # on the arguments alone, whatever is installed or configured.
         if scenario_ids is None and not args.allow_live_suite:
             _print("LIVE SUITE GUARD: evaluating all 15 scenarios against a paid API requires --allow-live-suite "
                    "(or pick one with --scenario SCN-xx). Nothing was called.")
             return 2
+        guard = _live_guard(args.provider, args.yes, what=f"eval ({args.scenario or 'all 15 scenarios'})")
+        if guard is not None:
+            return guard
     try:
         info = create_provider(args.provider, cassette=args.cassette).info
     except ProviderFailure as exc:
