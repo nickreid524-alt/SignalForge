@@ -1,0 +1,181 @@
+/*
+ * SignalForge design tokens.
+ *
+ * The target is an operational console: dark charcoal navigation against an off-white working
+ * canvas, dense but ordered information, one restrained accent, precise hairline borders. No
+ * gradients, no decorative hero areas, no neon. It should look like a tool an on-call engineer
+ * would have open at 3am, not a product landing page.
+ */
+
+:root {
+  /* Navigation and chrome: charcoal, never pure black. */
+  --nav-bg: #1b1f24;
+  --nav-bg-raised: #23282f;
+  --nav-border: #333a43;
+  --nav-fg: #e8eaed;
+  --nav-fg-muted: #9aa3ad;
+  --nav-fg-dim: #6f7883;
+
+  /* Working canvas: off-white, soft grey panels. */
+  --canvas: #f4f5f7;
+  --surface: #ffffff;
+  --surface-sunken: #f8f9fa;
+  --surface-raised: #ffffff;
+
+  --border: #dfe2e6;
+  --border-strong: #c4c9d0;
+  --border-hairline: #e8eaed;
+
+  --fg: #1b1f24;
+  --fg-muted: #5b636d;
+  --fg-dim: #858d97;
+  --fg-inverse: #ffffff;
+
+  /* One restrained accent: a deep operational blue. */
+  --accent: #1f5fbf;
+  --accent-strong: #17489a;
+  --accent-soft: #eaf1fc;
+  --accent-border: #b9d0f0;
+
+  /* Severity and state. Each is paired with an icon or label so colour is never the only signal. */
+  --sev-critical: #9e2620;
+  --sev-critical-bg: #fdeceb;
+  --sev-high: #b3541e;
+  --sev-high-bg: #fdf0e6;
+  --sev-medium: #8a6100;
+  --sev-medium-bg: #fdf6e3;
+  --sev-low: #37628a;
+  --sev-low-bg: #edf3f8;
+
+  --ok: #1d6f42;
+  --ok-bg: #e9f5ee;
+  --ok-border: #b6ddc6;
+  --warn: #8a6100;
+  --warn-bg: #fdf6e3;
+  --warn-border: #e6d3a0;
+  --danger: #9e2620;
+  --danger-bg: #fdeceb;
+  --danger-border: #f0bcb8;
+  --live: #8a3d00;
+  --live-bg: #fdf0e6;
+  --live-border: #edc7a3;
+
+  /* Hypothesis states. */
+  --h-proposed: #5b636d;
+  --h-supported: #1d6f42;
+  --h-weakened: #8a6100;
+  --h-refuted: #9e2620;
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 26px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  --radius-sm: 3px;
+  --radius: 5px;
+  --radius-lg: 8px;
+
+  --shadow-sm: 0 1px 2px rgba(27, 31, 36, 0.06);
+  --shadow: 0 2px 6px rgba(27, 31, 36, 0.08);
+  --shadow-lg: 0 8px 24px rgba(27, 31, 36, 0.12);
+
+  --nav-width: 216px;
+  --header-height: 52px;
+  --content-max: 1600px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+code,
+pre,
+.mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Respect a reduced-motion preference: the live stream is informative, not decorative. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

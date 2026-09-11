@@ -27,10 +27,13 @@ htmlcov/
 data/generated/
 runs/
 
-# Frontend (Phase 6)
+# Frontend
 node_modules/
 web/dist/
 web/.vite/
+web/playwright-report/
+web/test-results/
+web/node_modules/.tmp/
 
 # OS / editor
 .DS_Store
