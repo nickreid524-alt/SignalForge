@@ -83,8 +83,8 @@ missed; the server replays them from SQLite.
 
 ![The MCP catalogue: nine read-only tools with their published input schemas](docs/screenshots/mcp-catalogue.png)
 
-SignalForge speaks the Model Context Protocol properly, using the official Python SDK (`mcp` 2.2.0,
-protocol `2026-07-28`):
+SignalForge speaks the Model Context Protocol properly, using the official Python SDK,
+verified against `mcp` 2.2.0 and protocol `2026-07-28`:
 
 - A real `MCPServer` exposing **9 read-only tools** (service health, dependencies, deployments,
   configuration changes, metrics, logs, alerts, runbook search, historical incident search), each
@@ -157,8 +157,8 @@ Four providers sit behind one neutral boundary (`complete` and `generate_structu
 |---|---|---|
 | `scripted` | no | deterministic demonstration and evaluation; not an LLM |
 | `replay` | no | replays a recorded cassette for regression testing |
-| `anthropic` | yes | Anthropic Messages API (`anthropic` 1.5.0) |
-| `openai` | yes | OpenAI Responses API (`openai` 3.12.0) |
+| `anthropic` | yes | Anthropic Messages API, verified against `anthropic` 1.5.0 |
+| `openai` | yes | OpenAI Responses API, verified against `openai` 3.12.0 |
 
 A provider only translates. It never executes a tool, never touches the MCP client and never sees
 ground truth; the orchestrator owns the loop. Vendor SDKs are optional extras, model identifiers come

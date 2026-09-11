@@ -106,18 +106,49 @@ def test_every_benchmark_figure_in_the_readme_is_the_measured_one():
         assert measured, f"the measured value behind {row!r} has changed"
 
 
-def test_dependency_versions_are_current():
+def test_documented_sdk_versions_are_real_and_within_the_supported_range():
+    """The README names the versions each adapter was verified against.
+
+    It deliberately does not claim to track the latest release: vendors publish constantly, and a
+    test asserting the installed version equals the documented one would fail the build every time
+    they did. What must stay true is that the documented version is concrete, and that whatever is
+    installed satisfies the range declared in ``pyproject.toml``.
+    """
+    import tomllib
     from importlib import metadata
 
-    assert metadata.version("mcp") == "2.2.0"
-    claim("`mcp` 2.2.0")
-    for package, text in (("anthropic", "`anthropic` 1.5.0"), ("openai", "`openai` 3.12.0")):
+    manifest = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    declared = {re.match(r"^[A-Za-z0-9_.-]+", spec).group(0): spec
+                for spec in manifest["dependencies"]}
+    for extra in manifest["optional-dependencies"].values():
+        for spec in extra:
+            declared.setdefault(re.match(r"^[A-Za-z0-9_.-]+", spec).group(0), spec)
+
+    documented = {"mcp": "2.2.0", "anthropic": "1.5.0", "openai": "3.12.0"}
+    for package, version in documented.items():
+        claim(f"`{package}` {version}")
+        assert re.fullmatch(r"\d+\.\d+\.\d+", version), f"{package} version in the README is not concrete"
+        assert package in declared, f"{package} is documented but not declared in pyproject.toml"
+
         try:
-            version = metadata.version(package)
+            installed = metadata.version(package)
         except metadata.PackageNotFoundError:
-            pytest.skip(f"{package} is an optional extra and is not installed")
-        assert text.endswith(version), f"README states {text!r}, installed is {version}"
-        claim(text)
+            continue  # an optional extra that this environment does not have
+
+        lower = re.search(r">=\s*([0-9.]+)", declared[package])
+        upper = re.search(r"<\s*([0-9.]+)", declared[package])
+        parts = tuple(int(p) for p in installed.split(".")[:3])
+        if lower:
+            floor = (*(int(p) for p in lower.group(1).split(".")), 0, 0)
+            assert parts >= floor[:len(parts)], f"{package} {installed} is below {declared[package]}"
+        if upper:
+            ceiling = (*(int(p) for p in upper.group(1).split(".")), 0, 0)
+            assert parts < ceiling[:len(parts)] or parts[0] < ceiling[0], \
+                f"{package} {installed} is outside {declared[package]}"
+
+    claim("verified against `mcp` 2.2.0")
+    claim("verified against `anthropic` 1.5.0")
+    claim("verified against `openai` 3.12.0")
 
 
 def test_test_counts_are_stated_accurately():
