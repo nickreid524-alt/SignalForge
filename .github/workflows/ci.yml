@@ -39,6 +39,8 @@ jobs:
         run: signalforge investigate INC-2026-0114 --transport stdio --trace-db runs/ci.sqlite --json runs/ci-inc-0114.json
       - name: Deterministic evaluation (15 scenarios, scripted provider)
         run: signalforge eval --markdown runs/eval.md
+      - name: Local API demonstration over real HTTP (no frontend, no LLM API)
+        run: signalforge api-demo --deterministic --out runs/api-demo.txt
 
   providers:
     name: provider adapters (mocked, ubuntu / py3.12)
@@ -59,3 +61,32 @@ jobs:
         run: signalforge providers
       - name: Full test suite including adapter and contract tests
         run: pytest -q
+
+  api:
+    name: local API (ubuntu / py3.12)
+    runs-on: ubuntu-latest
+    env:
+      # The API defaults to loopback, the scripted provider and no CORS origin. Live providers stay
+      # disabled: SIGNALFORGE_API_ALLOW_LIVE is deliberately unset and there are no credentials here.
+      SIGNALFORGE_PROVIDER: scripted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+      - name: API tests via ASGI client (endpoints, SSE, reconnect, concurrency, firewall)
+        run: >-
+          pytest -q tests/test_api_system.py tests/test_api_incidents.py
+          tests/test_api_investigations.py tests/test_api_events.py tests/test_api_evaluations.py
+      - name: API integration over a real local HTTP socket
+        run: pytest -q tests/test_api_http_integration.py
+      - name: API demonstration transcript
+        run: signalforge api-demo --deterministic --out runs/api-demo.txt
+      - name: Fail if the demo transcript claims a live API was used
+        run: >-
+          grep -q "uses_live_api=False" runs/api-demo.txt
+          && ! grep -qi "uses live api. yes" runs/api-demo.txt
+          && ! grep -Eq "sk-[A-Za-z0-9_-]{12,}" runs/api-demo.txt

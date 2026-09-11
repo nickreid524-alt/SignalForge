@@ -1,0 +1,129 @@
+==============================================================================
+SignalForge Phase 4 - LOCAL API DEMONSTRATION (no frontend, no LLM API)
+Exercises: HTTP API -> investigation runner -> orchestrator -> MCP -> SSE event stream
+==============================================================================
+
+[1] Service metadata
+    GET /api/health -> ok (version 0.1.0)
+    GET /api/meta   -> SignalForge Demo Commerce | Synthetic Operations Environment
+        mode=scripted demonstration  uses_live_api=False  default_provider=scripted
+        MCP signalforge-ops v0.1.0 protocol 2026-07-28
+        15 incidents, 9 tools, 2 resources, 3 resource templates
+
+[2] Providers (no credential is described, only whether one is configured)
+    scripted   uses_live_api=False enabled=True  configured=None  deterministic demonstration; no LLM, no network
+    replay     uses_live_api=False enabled=True  configured=None  replays a recorded cassette; no LLM, no network (needs --cassette)
+    anthropic  uses_live_api=True  enabled=False configured=False  missing: ANTHROPIC_API_KEY, SIGNALFORGE_ANTHROPIC_MODEL; disabled on this server
+    openai     uses_live_api=True  enabled=False configured=False  missing: OPENAI_API_KEY, SIGNALFORGE_OPENAI_MODEL; disabled on this server
+
+[3] Incident queue (investigator-visible fields only)
+    INC-2026-0101  SEV2     checkout       Checkout latency regression after morning deployment
+    INC-2026-0102  SEV2     orders         Order placement failing intermittently with 503s
+    INC-2026-0103  SEV2     catalog        Catalog pods OOM-killed roughly every 40 minutes
+    ... 15 open incidents; no cause, category or scenario id is exposed
+
+[4] Create an investigation of INC-2026-0114 (scripted provider)
+    POST /api/investigations -> 202 queued  id=<investigation-id>
+    stream: /api/investigations/<investigation-id>/events
+
+[5] Server-Sent Events, live
+    connected: HTTP 200 text/event-stream; charset=utf-8
+      1  investigation.created    INC-2026-0114 via scripted-demo (scripted), live=False
+      2  status.changed           created -> seeding
+      3  evidence.registered      EVD-000001 incidents://open records=15
+      4  evidence.registered      EVD-000002 topology://services/payments records=4
+      5  status.changed           seeding -> deliberating
+      6  step.started             step 1, budget left {'steps': 7, 'tool_calls': 24, 'resource_reads': 12, 'model_calls': 14, 'repair_rounds': 1}
+      7  provider.completed       step 1 deliberate: 5 action(s), stop=tool_use
+      8  status.changed           deliberating -> gathering
+      9  tool.requested           get_service_health {"node": "payments", "as_of": "2026-09-02T12:18:00Z"}
+     10  evidence.registered      EVD-000003 get_service_health records=3
+     11  tool.completed           get_service_health -> EVD-000003 ok=True
+     12  tool.requested           get_service_health {"node": "payvault", "as_of": "2026-09-02T12:18:00Z"}
+     13  evidence.registered      EVD-000004 get_service_health records=1
+     14  tool.completed           get_service_health -> EVD-000004 ok=True
+     15  tool.requested           get_deployments {"service": "payments", "start": "2026-09-01T12:18:00Z", "en
+     16  evidence.registered      EVD-000005 get_deployments records=0
+     17  tool.completed           get_deployments -> EVD-000005 ok=True
+     18  tool.requested           get_config_changes {"node": "payments", "start": "2026-09-02T09:18:00Z", "end":
+     19  evidence.registered      EVD-000006 get_config_changes records=1
+     20  tool.completed           get_config_changes -> EVD-000006 ok=True
+     21  tool.requested           update_hypotheses {"updates": 2}
+     22  hypothesis.updated       H1 proposed@0.50 PayVault is degraded in our region
+     23  hypothesis.updated       H2 proposed@0.25 The payvault.timeout_ms change caused the timeou
+     24  status.changed           gathering -> deliberating
+     25  step.started             step 2, budget left {'steps': 6, 'tool_calls': 20, 'resource_reads': 12, 'model_calls': 13, 'repair_rounds': 1}
+     26  provider.completed       step 2 deliberate: 6 action(s), stop=tool_use
+     27  status.changed           deliberating -> gathering
+     28  tool.requested           query_metrics {"node": "payments", "metric": "dependency_latency_p95", "di
+     29  evidence.registered      EVD-000007 query_metrics records=1
+     30  tool.completed           query_metrics -> EVD-000007 ok=True
+     31  tool.requested           query_metrics {"node": "payments", "metric": "error_rate", "start": "2026-
+     32  evidence.registered      EVD-000008 query_metrics records=1
+     33  tool.completed           query_metrics -> EVD-000008 ok=True
+     34  tool.requested           query_logs {"node": "payments", "start": "2026-09-02T11:18:00Z", "end":
+     35  evidence.registered      EVD-000009 query_logs records=20
+     36  tool.completed           query_logs -> EVD-000009 ok=True
+     37  tool.requested           search_incidents {"query": "payvault regional degradation authorization timeo
+     38  evidence.registered      EVD-000010 search_incidents records=3
+     39  tool.completed           search_incidents -> EVD-000010 ok=True
+     40  tool.requested           search_runbooks {"query": "payvault fallback processor outage", "limit": 3}
+     41  evidence.registered      EVD-000011 search_runbooks records=3
+     42  tool.completed           search_runbooks -> EVD-000011 ok=True
+     43  tool.requested           update_hypotheses {"updates": 2}
+     44  hypothesis.updated       H1 supported@0.85 PayVault reports a major outage in region us-wes
+     45  hypothesis.updated       H2 refuted@0.05 The payvault.timeout_ms change caused the timeou
+     46  status.changed           gathering -> deliberating
+     47  step.started             step 3, budget left {'steps': 5, 'tool_calls': 15, 'resource_reads': 12, 'model_calls': 12, 'repair_rounds': 1}
+     48  provider.completed       step 3 deliberate: 3 action(s), stop=tool_use
+     49  status.changed           deliberating -> gathering
+     50  tool.requested           read_resource {"uri": "incident://INC-2026-0044"}
+     51  evidence.registered      EVD-000012 incident://INC-2026-0044 records=1
+     52  resource.read            incident://INC-2026-0044 -> EVD-000012
+     53  tool.requested           read_resource {"uri": "runbook://RB-018"}
+     54  evidence.registered      EVD-000013 runbook://RB-018 records=1
+     55  resource.read            runbook://RB-018 -> EVD-000013
+     56  tool.requested           finish_investigation {"reason": "playbook complete"}
+     57  status.changed           gathering -> concluding
+     58  validation.started       round 0
+     59  provider.completed       step 3 report: 0 action(s), stop=structured
+     60  status.changed           concluding -> validating
+     61  report.completed         root_cause_identified @ 0.85, validation_ok=True
+     62  status.changed           validating -> completed
+     63  investigation.completed  completed: 3 steps, 9 tool calls, 13 evidence items
+    stream closed after the terminal event; 63 events, last id 63
+
+[6] Reconnect with Last-Event-ID (what a browser does after a dropped connection)
+    GET .../events with Last-Event-ID: 60 -> replayed 3 missed event(s): report.completed, status.changed, investigation.completed
+
+[7] Results
+    status=completed  steps=3  tool_calls=9  resource_reads=2  evidence=13  rejected=0
+    tokens reported: False (scripted provider uses no LLM)
+    H1 [supported 0.85] PayVault reports a major outage in region us-west since 11:25; authorisation latency to
+        s1:proposed@0.50 -> s2:supported@0.85
+    H2 [refuted   0.05] The payvault.timeout_ms change caused the timeouts
+        s1:proposed@0.25 -> s2:refuted@0.05
+    report: status=root_cause_identified confidence=0.85 validation_ok=True
+    primary: H1 [third_party_degradation] PayVault reports a major outage in region us-west since 11:25; authorisation latency to
+    cites:   EVD-000004, EVD-000007, EVD-000008, EVD-000009, EVD-000005
+    evidence: 13 items, every one flagged untrusted=True
+        EVD-000001  resource incidents://open                               records=15
+        EVD-000002  resource topology://services/payments                   records=4
+        EVD-000003  tool     get_service_health                             records=3
+        EVD-000004  tool     get_service_health                             records=1
+    trace: 10 status changes, 4 model calls, 14 actions, 1 validation round(s)
+    trace notice: Evidence text is retrieved content from the synthetic environment and is untrusted data. Provide...
+
+[8] Frozen benchmark (served as a static artifact; requesting it runs nothing)
+    GET /api/evaluations/scripted -> 15 scenarios, pass_rate=1, citation_validity=1, unsupported_claims=0
+
+[9] Refusals (the browser cannot widen its own permissions)
+    an API key in the body   -> 400 invalid_request: api_key: Extra inputs are not permitted
+    a model override         -> 400 invalid_request: model: Extra inputs are not permitted
+    a system prompt          -> 400 invalid_request: system_prompt: Extra inputs are not permitted
+    a live provider          -> 409 provider_unavailable: live provider 'anthropic' is disabled on this server; start it with SIGN
+    an unknown incident      -> 404 not_found: no incident with id 'INC-9999-9999'
+
+    There is no endpoint that executes an MCP tool directly; tool use belongs to an investigation.
+
+Done. Everything above crossed a real HTTP boundary on http://127.0.0.1:<port>.

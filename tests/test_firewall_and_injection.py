@@ -19,7 +19,7 @@ from tests.helpers import SequenceProvider, turn, valid_draft
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "signalforge"
 PRODUCTION = ("orchestration", "providers", "reports", "audit", "mcp_server", "mcp_client", "evidence", "retrieval",
-              "world", "config.py")
+              "world", "config.py", "events", "api")
 GROUND_TRUTH_MODULES = ("signalforge.scenarios", "signalforge.evals")
 
 
