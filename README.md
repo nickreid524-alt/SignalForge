@@ -21,8 +21,8 @@ real employer, customer, system or incident.
 | 1 | Synthetic world, MCP server + resources, retrieval, evidence registry, MCP client | done |
 | 2 | Bounded investigation engine, scripted demo provider, grounded reports, audit trace, deterministic evaluation harness | done |
 | 3 | Anthropic and OpenAI provider adapters behind the same boundary, error normalisation, token telemetry, cassette v2, live-run guards | done |
-| 4 | Local HTTP API with a durable, replayable Server-Sent Events investigation stream | done (under review) |
-| 5+ | Web UI | planned |
+| 4 | Local HTTP API with a durable, replayable Server-Sent Events investigation stream | done |
+| 5 | Web application: incident queue, live investigation workspace, evidence, evaluations | done (under review) |
 
 ## Development
 
@@ -85,7 +85,21 @@ accepted, there is no endpoint that executes an MCP tool, and live providers sta
 the operator sets `SIGNALFORGE_API_ALLOW_LIVE=1`. CORS is closed by default and never a wildcard.
 See `docs/notes/browser-trust-boundary.md`.
 
-Technical notes live in `docs/notes/` (API boundary, SSE event contract, investigation runner,
-browser trust boundary, provider architecture, the two adapters, the provider security boundary, the
-cassette format, and the Phase 1–2 notes). The public README will be written once the web
-UI exists.
+## Web application
+
+```bash
+signalforge serve                  # terminal 1: the API on 127.0.0.1:8765
+npm --prefix web install           # first time only
+npm --prefix web run dev           # terminal 2: the console on 127.0.0.1:5173
+```
+
+React, TypeScript and Vite, with three runtime dependencies and no UI kit. It consumes the same HTTP
+and SSE contracts any client would; it imports no Python and reads no database. Screens: the incident
+queue, the live investigation workspace (timeline of MCP tool calls, hypothesis board, evidence
+workbench, grounded report, observable trace), the MCP catalogue, the deterministic evaluation
+dashboard, and system status. See `docs/notes/web-application.md`.
+
+Technical notes live in `docs/notes/` (web application, API boundary, SSE event contract,
+investigation runner, browser trust boundary, provider architecture, the two adapters, the provider
+security boundary, the cassette format, and the Phase 1–2 notes). The public README will be
+written once the screenshots and visual review are done.

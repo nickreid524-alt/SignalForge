@@ -1,0 +1,976 @@
+{
+  "investigation": {
+    "id": "inv-inc-2026-0101-adb6cc7f",
+    "incident_id": "INC-2026-0101",
+    "status": "completed",
+    "provider_name": "scripted-demo",
+    "provider_model": "playbook-v1",
+    "provider_mode": "scripted",
+    "uses_llm": false,
+    "transport": "in-memory",
+    "started_at": "2026-09-11T12:36:33.588619+00:00",
+    "ended_at": "2026-09-11T12:36:33.736020+00:00",
+    "termination_reason": null,
+    "error": null,
+    "budget": {
+      "max_actions_per_step": 8,
+      "max_evidence_chars_per_result": 6000,
+      "max_model_calls": 14,
+      "max_repair_rounds": 1,
+      "max_resource_reads": 12,
+      "max_steps": 8,
+      "max_tool_calls": 24,
+      "max_wall_clock_seconds": 180.0
+    },
+    "usage": {
+      "cache_write_tokens": 0,
+      "cached_input_tokens": 0,
+      "elapsed_seconds": 0.146,
+      "input_tokens": 0,
+      "model_calls": 5,
+      "output_tokens": 0,
+      "reasoning_output_tokens": 0,
+      "rejected_actions": 0,
+      "repair_rounds": 0,
+      "resource_reads": 1,
+      "steps": 4,
+      "suppressed_duplicates": 0,
+      "tokens_reported": false,
+      "tool_calls": 11
+    }
+  },
+  "status_changes": [
+    {
+      "at": "2026-09-11T12:36:33.588619Z",
+      "from_status": "created",
+      "to_status": "seeding",
+      "note": "discover tools; read incident queue and topology through MCP"
+    },
+    {
+      "at": "2026-09-11T12:36:33.604933Z",
+      "from_status": "seeding",
+      "to_status": "deliberating",
+      "note": "seeded"
+    },
+    {
+      "at": "2026-09-11T12:36:33.606455Z",
+      "from_status": "deliberating",
+      "to_status": "gathering",
+      "note": "step 1: 5 requested action(s)"
+    },
+    {
+      "at": "2026-09-11T12:36:33.656473Z",
+      "from_status": "gathering",
+      "to_status": "deliberating",
+      "note": "step 1 gathered"
+    },
+    {
+      "at": "2026-09-11T12:36:33.658479Z",
+      "from_status": "deliberating",
+      "to_status": "gathering",
+      "note": "step 2: 5 requested action(s)"
+    },
+    {
+      "at": "2026-09-11T12:36:33.706105Z",
+      "from_status": "gathering",
+      "to_status": "deliberating",
+      "note": "step 2 gathered"
+    },
+    {
+      "at": "2026-09-11T12:36:33.708112Z",
+      "from_status": "deliberating",
+      "to_status": "gathering",
+      "note": "step 3: 3 requested action(s)"
+    },
+    {
+      "at": "2026-09-11T12:36:33.726060Z",
+      "from_status": "gathering",
+      "to_status": "deliberating",
+      "note": "step 3 gathered"
+    },
+    {
+      "at": "2026-09-11T12:36:33.728065Z",
+      "from_status": "deliberating",
+      "to_status": "gathering",
+      "note": "step 4: 2 requested action(s)"
+    },
+    {
+      "at": "2026-09-11T12:36:33.728065Z",
+      "from_status": "gathering",
+      "to_status": "concluding",
+      "note": "deployment aligned with onset, mechanism visible in logs, dependency latency isolated to inventory"
+    },
+    {
+      "at": "2026-09-11T12:36:33.734654Z",
+      "from_status": "concluding",
+      "to_status": "validating",
+      "note": "draft 0: 0 error(s)"
+    },
+    {
+      "at": "2026-09-11T12:36:33.735034Z",
+      "from_status": "validating",
+      "to_status": "completed",
+      "note": "validated"
+    }
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "started_at": "2026-09-11T12:36:33.604933Z",
+      "ended_at": "2026-09-11T12:36:33.656473Z",
+      "assistant_text": "[scripted demonstration] step 1/4: get_service_health, get_deployments, get_config_changes, get_alerts, update_hypotheses",
+      "finish_requested": 0
+    },
+    {
+      "step": 2,
+      "started_at": "2026-09-11T12:36:33.656473Z",
+      "ended_at": "2026-09-11T12:36:33.706105Z",
+      "assistant_text": "[scripted demonstration] step 2/4: query_metrics, query_metrics, query_metrics, query_logs, update_hypotheses",
+      "finish_requested": 0
+    },
+    {
+      "step": 3,
+      "started_at": "2026-09-11T12:36:33.706105Z",
+      "ended_at": "2026-09-11T12:36:33.726060Z",
+      "assistant_text": "[scripted demonstration] step 3/4: get_service_health, query_metrics, search_runbooks",
+      "finish_requested": 0
+    },
+    {
+      "step": 4,
+      "started_at": "2026-09-11T12:36:33.726060Z",
+      "ended_at": "2026-09-11T12:36:33.728065Z",
+      "assistant_text": "[scripted demonstration] step 4/4: read_resource, finish_investigation",
+      "finish_requested": 1
+    }
+  ],
+  "model_calls": [
+    {
+      "id": "inv-inc-2026-0101-adb6cc7f-mc001",
+      "step": 1,
+      "purpose": "deliberate",
+      "provider_name": "scripted-demo",
+      "provider_model": "playbook-v1",
+      "latency_ms": 0.0,
+      "stop_reason": "tool_use",
+      "error_category": null,
+      "usage_reported": false,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cached_input_tokens": null,
+      "reasoning_output_tokens": null
+    },
+    {
+      "id": "inv-inc-2026-0101-adb6cc7f-mc002",
+      "step": 2,
+      "purpose": "deliberate",
+      "provider_name": "scripted-demo",
+      "provider_model": "playbook-v1",
+      "latency_ms": 0.0,
+      "stop_reason": "tool_use",
+      "error_category": null,
+      "usage_reported": false,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cached_input_tokens": null,
+      "reasoning_output_tokens": null
+    },
+    {
+      "id": "inv-inc-2026-0101-adb6cc7f-mc003",
+      "step": 3,
+      "purpose": "deliberate",
+      "provider_name": "scripted-demo",
+      "provider_model": "playbook-v1",
+      "latency_ms": 0.0,
+      "stop_reason": "tool_use",
+      "error_category": null,
+      "usage_reported": false,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cached_input_tokens": null,
+      "reasoning_output_tokens": null
+    },
+    {
+      "id": "inv-inc-2026-0101-adb6cc7f-mc004",
+      "step": 4,
+      "purpose": "deliberate",
+      "provider_name": "scripted-demo",
+      "provider_model": "playbook-v1",
+      "latency_ms": 0.0,
+      "stop_reason": "tool_use",
+      "error_category": null,
+      "usage_reported": false,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cached_input_tokens": null,
+      "reasoning_output_tokens": null
+    },
+    {
+      "id": "inv-inc-2026-0101-adb6cc7f-mc005",
+      "step": 4,
+      "purpose": "report",
+      "provider_name": "scripted-demo",
+      "provider_model": "playbook-v1",
+      "latency_ms": 0.0,
+      "stop_reason": "structured",
+      "error_category": null,
+      "usage_reported": false,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cached_input_tokens": null,
+      "reasoning_output_tokens": null
+    }
+  ],
+  "actions": [
+    {
+      "step": 1,
+      "kind": "call_tool",
+      "name": "get_service_health",
+      "arguments": {
+        "as_of": "2026-08-03T08:44:00Z",
+        "node": "checkout"
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": "EVD-000003",
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 16.116
+    },
+    {
+      "step": 1,
+      "kind": "call_tool",
+      "name": "get_deployments",
+      "arguments": {
+        "end": "2026-08-03T08:44:00Z",
+        "service": "checkout",
+        "start": "2026-08-03T02:44:00Z"
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": "EVD-000004",
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 8.872
+    },
+    {
+      "step": 1,
+      "kind": "call_tool",
+      "name": "get_config_changes",
+      "arguments": {
+        "end": "2026-08-03T08:44:00Z",
+        "node": "checkout",
+        "start": "2026-08-03T02:44:00Z"
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": "EVD-000005",
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 7.83
+    },
+    {
+      "step": 1,
+      "kind": "call_tool",
+      "name": "get_alerts",
+      "arguments": {
+        "end": "2026-08-03T08:44:00Z",
+        "start": "2026-08-03T02:44:00Z"
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": "EVD-000006",
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 10.729
+    },
+    {
+      "step": 1,
+      "kind": "update_hypotheses",
+      "name": "update_hypotheses",
+      "arguments": {
+        "updates": [
+          {
+            "confidence": 0.5,
+            "contradicting_evidence_ids": [],
+            "id": null,
+            "note": "",
+            "ref": "h_deploy",
+            "statement": "The 08:09 checkout release changed reservation behaviour and slowed order submission",
+            "status": "proposed",
+            "supporting_evidence_ids": []
+          },
+          {
+            "confidence": 0.3,
+            "contradicting_evidence_ids": [],
+            "id": null,
+            "note": "a PayVault latency alert fired at 08:20",
+            "ref": "h_payvault",
+            "statement": "PayVault latency is slowing checkout through payments",
+            "status": "proposed",
+            "supporting_evidence_ids": []
+          }
+        ]
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": null,
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 0.0
+    },
+    {
+      "step": 2,
+      "kind": "call_tool",
+      "name": "query_metrics",
+      "arguments": {
+        "end": "2026-08-03T08:44:00Z",
+        "metric": "latency_p95",
+        "node": "checkout",
+        "start": "2026-08-03T05:44:00Z"
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": "EVD-000007",
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 15.074
+    },
+    {
+      "step": 2,
+      "kind": "call_tool",
+      "name": "query_metrics",
+      "arguments": {
+        "dimension": "dependency=inventory",
+        "end": "2026-08-03T08:44:00Z",
+        "metric": "dependency_latency_p95",
+        "node": "checkout",
+        "start": "2026-08-03T05:44:00Z"
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": "EVD-000008",
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 2.53
+    },
+    {
+      "step": 2,
+      "kind": "call_tool",
+      "name": "query_metrics",
+      "arguments": {
+        "dimension": "dependency=payments",
+        "end": "2026-08-03T08:44:00Z",
+        "metric": "dependency_latency_p95",
+        "node": "checkout",
+        "start": "2026-08-03T05:44:00Z"
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": "EVD-000009",
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 2.579
+    },
+    {
+      "step": 2,
+      "kind": "call_tool",
+      "name": "query_logs",
+      "arguments": {
+        "end": "2026-08-03T08:44:00Z",
+        "level": "WARN",
+        "limit": 40,
+        "node": "checkout",
+        "start": "2026-08-03T07:44:00Z"
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": "EVD-000010",
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 20.904
+    },
+    {
+      "step": 2,
+      "kind": "update_hypotheses",
+      "name": "update_hypotheses",
+      "arguments": {
+        "updates": [
+          {
+            "confidence": 0.85,
+            "contradicting_evidence_ids": [],
+            "id": "H1",
+            "note": "",
+            "ref": "h_deploy",
+            "statement": "Checkout release v2026.08.03-1 set reservation.batch_mode=false, fanning out one inventory reserve call per line item and multiplying checkout latency",
+            "status": "supported",
+            "supporting_evidence_ids": [
+              "EVD-000004#DEP-0038"
+            ]
+          },
+          {
+            "confidence": 0.05,
+            "contradicting_evidence_ids": [],
+            "id": "H2",
+            "note": "payments dependency latency is flat",
+            "ref": "h_payvault",
+            "statement": "PayVault latency is slowing checkout through payments",
+            "status": "refuted",
+            "supporting_evidence_ids": []
+          }
+        ]
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": null,
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 0.0
+    },
+    {
+      "step": 3,
+      "kind": "call_tool",
+      "name": "get_service_health",
+      "arguments": {
+        "as_of": "2026-08-03T08:44:00Z",
+        "node": "inventory"
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": "EVD-000011",
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 1.896
+    },
+    {
+      "step": 3,
+      "kind": "call_tool",
+      "name": "query_metrics",
+      "arguments": {
+        "end": "2026-08-03T08:44:00Z",
+        "metric": "request_rate",
+        "node": "inventory",
+        "start": "2026-08-03T05:44:00Z"
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": "EVD-000012",
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 2.439
+    },
+    {
+      "step": 3,
+      "kind": "call_tool",
+      "name": "search_runbooks",
+      "arguments": {
+        "limit": 3,
+        "query": "checkout latency regression rollback release",
+        "service": "checkout"
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": "EVD-000013",
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 11.144
+    },
+    {
+      "step": 4,
+      "kind": "read_resource",
+      "name": "read_resource",
+      "arguments": {
+        "uri": "runbook://RB-004"
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": "EVD-000014",
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 1.531
+    },
+    {
+      "step": 4,
+      "kind": "finish_investigation",
+      "name": "finish_investigation",
+      "arguments": {
+        "reason": "deployment aligned with onset, mechanism visible in logs, dependency latency isolated to inventory"
+      },
+      "accepted": 1,
+      "rejection_code": null,
+      "rejection_reason": null,
+      "evidence_id": null,
+      "duplicate_of": null,
+      "ok": 1,
+      "error": null,
+      "latency_ms": 0.0
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "EVD-000001",
+      "sequence": 1,
+      "acquired_at": "2026-09-11T12:36:33.598933Z",
+      "source_kind": "resource",
+      "source_name": "incidents://open",
+      "arguments": {
+        "uri": "incidents://open"
+      },
+      "result_kind": "document",
+      "content_hash": "sha256:167a8b11cbde61cf98ba22f0f92f3b775f29eaa0dc6c547dac0c7d75083fe77f",
+      "latency_ms": 3.859,
+      "error": null,
+      "ok": true,
+      "source_ids": [
+        "INC-2026-0101",
+        "INC-2026-0102",
+        "INC-2026-0103",
+        "INC-2026-0104",
+        "INC-2026-0105",
+        "INC-2026-0106",
+        "INC-2026-0107",
+        "INC-2026-0108",
+        "INC-2026-0109",
+        "INC-2026-0110",
+        "INC-2026-0111",
+        "INC-2026-0112",
+        "INC-2026-0113",
+        "INC-2026-0114",
+        "INC-2026-0115"
+      ],
+      "record_count": 15,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000002",
+      "sequence": 2,
+      "acquired_at": "2026-09-11T12:36:33.604933Z",
+      "source_kind": "resource",
+      "source_name": "topology://services/checkout",
+      "arguments": {
+        "uri": "topology://services/checkout"
+      },
+      "result_kind": "document",
+      "content_hash": "sha256:76ab6202efcfaffb02e35d5bfa7b6f1b236309771898530ed3a311bdd269aa54",
+      "latency_ms": 2.17,
+      "error": null,
+      "ok": true,
+      "source_ids": [
+        "checkout",
+        "EDGE-checkout-cart",
+        "EDGE-checkout-identity",
+        "EDGE-checkout-inventory",
+        "EDGE-checkout-orders",
+        "EDGE-checkout-payments",
+        "EDGE-checkout-pricing",
+        "EDGE-edge-gateway-checkout"
+      ],
+      "record_count": 8,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000003",
+      "sequence": 3,
+      "acquired_at": "2026-09-11T12:36:33.621487Z",
+      "source_kind": "tool",
+      "source_name": "get_service_health",
+      "arguments": {
+        "as_of": "2026-08-03T08:44:00Z",
+        "node": "checkout"
+      },
+      "result_kind": "service_health",
+      "content_hash": "sha256:cb24fdc50e9b88d2aa5a634c11574317918f107e0c1bf6332be18fba9835614f",
+      "latency_ms": 16.116,
+      "error": null,
+      "ok": true,
+      "source_ids": [
+        "HLT-checkout-20260803T0844",
+        "ALT-0010"
+      ],
+      "record_count": 2,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000004",
+      "sequence": 4,
+      "acquired_at": "2026-09-11T12:36:33.621487Z",
+      "source_kind": "tool",
+      "source_name": "get_deployments",
+      "arguments": {
+        "end": "2026-08-03T08:44:00Z",
+        "service": "checkout",
+        "start": "2026-08-03T02:44:00Z"
+      },
+      "result_kind": "deployments",
+      "content_hash": "sha256:c4151e0914583bfeacfed31e162998060e6b0c9938bc19e65d915842ec216a56",
+      "latency_ms": 8.872,
+      "error": null,
+      "ok": true,
+      "source_ids": [
+        "DEP-0038"
+      ],
+      "record_count": 1,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000005",
+      "sequence": 5,
+      "acquired_at": "2026-09-11T12:36:33.643863Z",
+      "source_kind": "tool",
+      "source_name": "get_config_changes",
+      "arguments": {
+        "end": "2026-08-03T08:44:00Z",
+        "node": "checkout",
+        "start": "2026-08-03T02:44:00Z"
+      },
+      "result_kind": "config_changes",
+      "content_hash": "sha256:1f4eb59fd570dc994c102e9c6bf32818b62e04b3cd388f5cdab5274ee7a79753",
+      "latency_ms": 7.83,
+      "error": null,
+      "ok": true,
+      "source_ids": [],
+      "record_count": 0,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000006",
+      "sequence": 6,
+      "acquired_at": "2026-09-11T12:36:33.656473Z",
+      "source_kind": "tool",
+      "source_name": "get_alerts",
+      "arguments": {
+        "end": "2026-08-03T08:44:00Z",
+        "start": "2026-08-03T02:44:00Z"
+      },
+      "result_kind": "alerts",
+      "content_hash": "sha256:2414f020dc1a15aac22388f6d9ec6bee6448de7248d9e5c51cd9ad1b6b53aaeb",
+      "latency_ms": 10.729,
+      "error": null,
+      "ok": true,
+      "source_ids": [
+        "ALT-0010",
+        "ALT-0011"
+      ],
+      "record_count": 2,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000007",
+      "sequence": 7,
+      "acquired_at": "2026-09-11T12:36:33.673989Z",
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "arguments": {
+        "end": "2026-08-03T08:44:00Z",
+        "metric": "latency_p95",
+        "node": "checkout",
+        "start": "2026-08-03T05:44:00Z"
+      },
+      "result_kind": "metric_series",
+      "content_hash": "sha256:c07776fef1d95e2a1c409b5c58e3799c8cbd979ac19fffbe9cfde6a71e1ee1ae",
+      "latency_ms": 15.074,
+      "error": null,
+      "ok": true,
+      "source_ids": [
+        "MET-checkout-latency_p95-20260803T0544-20260803T0844-300"
+      ],
+      "record_count": 1,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000008",
+      "sequence": 8,
+      "acquired_at": "2026-09-11T12:36:33.677748Z",
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "arguments": {
+        "dimension": "dependency=inventory",
+        "end": "2026-08-03T08:44:00Z",
+        "metric": "dependency_latency_p95",
+        "node": "checkout",
+        "start": "2026-08-03T05:44:00Z"
+      },
+      "result_kind": "metric_series",
+      "content_hash": "sha256:3e9704057b4f518bb9359777aa0f2265611158c634977e11b3cfdb833e4a682f",
+      "latency_ms": 2.53,
+      "error": null,
+      "ok": true,
+      "source_ids": [
+        "MET-checkout-dependency_latency_p95-dependency:inventory-20260803T0544-20260803T0844-300"
+      ],
+      "record_count": 1,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000009",
+      "sequence": 9,
+      "acquired_at": "2026-09-11T12:36:33.680879Z",
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "arguments": {
+        "dimension": "dependency=payments",
+        "end": "2026-08-03T08:44:00Z",
+        "metric": "dependency_latency_p95",
+        "node": "checkout",
+        "start": "2026-08-03T05:44:00Z"
+      },
+      "result_kind": "metric_series",
+      "content_hash": "sha256:375fde524dd2e1a7702686b655ebca21cefc596b406297e38f541dd4659e759b",
+      "latency_ms": 2.579,
+      "error": null,
+      "ok": true,
+      "source_ids": [
+        "MET-checkout-dependency_latency_p95-dependency:payments-20260803T0544-20260803T0844-300"
+      ],
+      "record_count": 1,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000010",
+      "sequence": 10,
+      "acquired_at": "2026-09-11T12:36:33.702766Z",
+      "source_kind": "tool",
+      "source_name": "query_logs",
+      "arguments": {
+        "end": "2026-08-03T08:44:00Z",
+        "level": "WARN",
+        "limit": 40,
+        "node": "checkout",
+        "start": "2026-08-03T07:44:00Z"
+      },
+      "result_kind": "log_query",
+      "content_hash": "sha256:79c76f02f5276401f17a4a0d9946bc7f4a93b59170527ac0bb770479c6713bf6",
+      "latency_ms": 20.904,
+      "error": null,
+      "ok": true,
+      "source_ids": [
+        "LOG-checkout-20260803T0745-005",
+        "LOG-checkout-20260803T0755-004",
+        "LOG-checkout-20260803T0755-009",
+        "LOG-checkout-20260803T0800-007",
+        "LOG-checkout-20260803T0805-009",
+        "LOG-checkout-20260803T0810-002",
+        "LOG-checkout-20260803T0810-004",
+        "LOG-checkout-20260803T0810-005",
+        "LOG-checkout-20260803T0810-007",
+        "LOG-checkout-20260803T0810-009",
+        "LOG-checkout-20260803T0810-011",
+        "LOG-checkout-20260803T0810-012",
+        "LOG-checkout-20260803T0810-013",
+        "LOG-checkout-20260803T0810-014",
+        "LOG-checkout-20260803T0810-015",
+        "LOG-checkout-20260803T0810-016",
+        "LOG-checkout-20260803T0810-017",
+        "LOG-checkout-20260803T0810-018",
+        "LOG-checkout-20260803T0810-019",
+        "LOG-checkout-20260803T0810-020",
+        "LOG-checkout-20260803T0810-021",
+        "LOG-checkout-20260803T0810-022",
+        "LOG-checkout-20260803T0810-023",
+        "LOG-checkout-20260803T0810-024",
+        "LOG-checkout-20260803T0810-025",
+        "LOG-checkout-20260803T0810-026",
+        "LOG-checkout-20260803T0810-027",
+        "LOG-checkout-20260803T0810-028",
+        "LOG-checkout-20260803T0810-029",
+        "LOG-checkout-20260803T0810-030",
+        "LOG-checkout-20260803T0810-031",
+        "LOG-checkout-20260803T0810-033",
+        "LOG-checkout-20260803T0810-035",
+        "LOG-checkout-20260803T0810-036",
+        "LOG-checkout-20260803T0810-037",
+        "LOG-checkout-20260803T0810-038",
+        "LOG-checkout-20260803T0810-039",
+        "LOG-checkout-20260803T0810-040",
+        "LOG-checkout-20260803T0810-041",
+        "LOG-checkout-20260803T0810-042"
+      ],
+      "record_count": 40,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000011",
+      "sequence": 11,
+      "acquired_at": "2026-09-11T12:36:33.710118Z",
+      "source_kind": "tool",
+      "source_name": "get_service_health",
+      "arguments": {
+        "as_of": "2026-08-03T08:44:00Z",
+        "node": "inventory"
+      },
+      "result_kind": "service_health",
+      "content_hash": "sha256:20c03d0bed5df4b2f5d150bf4c17f09e84bcf9e95465d049ee50a903cb195adb",
+      "latency_ms": 1.896,
+      "error": null,
+      "ok": true,
+      "source_ids": [
+        "HLT-inventory-20260803T0844"
+      ],
+      "record_count": 1,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000012",
+      "sequence": 12,
+      "acquired_at": "2026-09-11T12:36:33.713363Z",
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "arguments": {
+        "end": "2026-08-03T08:44:00Z",
+        "metric": "request_rate",
+        "node": "inventory",
+        "start": "2026-08-03T05:44:00Z"
+      },
+      "result_kind": "metric_series",
+      "content_hash": "sha256:a303ebfb4702925401e291e2bc07e4d9bbcd6b2cc14144b0ae7f6bc16c8f3773",
+      "latency_ms": 2.439,
+      "error": null,
+      "ok": true,
+      "source_ids": [
+        "MET-inventory-request_rate-20260803T0544-20260803T0844-300"
+      ],
+      "record_count": 1,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000013",
+      "sequence": 13,
+      "acquired_at": "2026-09-11T12:36:33.726060Z",
+      "source_kind": "tool",
+      "source_name": "search_runbooks",
+      "arguments": {
+        "limit": 3,
+        "query": "checkout latency regression rollback release",
+        "service": "checkout"
+      },
+      "result_kind": "runbook_search",
+      "content_hash": "sha256:c819c6d3ff46e4af2af0301acb4b43d383d354ebce52fc7f588487c44c86e7a6",
+      "latency_ms": 11.144,
+      "error": null,
+      "ok": true,
+      "source_ids": [
+        "RB-004#s4",
+        "RB-001#s4",
+        "RB-004#s2"
+      ],
+      "record_count": 3,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000014",
+      "sequence": 14,
+      "acquired_at": "2026-09-11T12:36:33.728065Z",
+      "source_kind": "resource",
+      "source_name": "runbook://RB-004",
+      "arguments": {
+        "uri": "runbook://RB-004"
+      },
+      "result_kind": "document",
+      "content_hash": "sha256:b2e64f8685c5b16a13faafb41534fdf8d4097745f809e5aa79dab6095e403084",
+      "latency_ms": 1.531,
+      "error": null,
+      "ok": true,
+      "source_ids": [
+        "RB-004"
+      ],
+      "record_count": 1,
+      "untrusted": true
+    }
+  ],
+  "hypothesis_updates": [
+    {
+      "step": 1,
+      "hypothesis_id": "H1",
+      "statement": "The 08:09 checkout release changed reservation behaviour and slowed order submission",
+      "status": "proposed",
+      "confidence": 0.5,
+      "supporting": [],
+      "contradicting": [],
+      "note": ""
+    },
+    {
+      "step": 1,
+      "hypothesis_id": "H2",
+      "statement": "PayVault latency is slowing checkout through payments",
+      "status": "proposed",
+      "confidence": 0.3,
+      "supporting": [],
+      "contradicting": [],
+      "note": "a PayVault latency alert fired at 08:20"
+    },
+    {
+      "step": 2,
+      "hypothesis_id": "H1",
+      "statement": "Checkout release v2026.08.03-1 set reservation.batch_mode=false, fanning out one inventory reserve call per line item and multiplying checkout latency",
+      "status": "supported",
+      "confidence": 0.85,
+      "supporting": [
+        "EVD-000004#DEP-0038"
+      ],
+      "contradicting": [],
+      "note": ""
+    },
+    {
+      "step": 2,
+      "hypothesis_id": "H2",
+      "statement": "PayVault latency is slowing checkout through payments",
+      "status": "refuted",
+      "confidence": 0.05,
+      "supporting": [],
+      "contradicting": [],
+      "note": "payments dependency latency is flat"
+    }
+  ],
+  "validations": [
+    {
+      "round": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "issues": [
+        {
+          "message": "4 gathered evidence item(s) not cited: EVD-000001, EVD-000002, EVD-000005, EVD-000013",
+          "path": "evidence",
+          "rule": "G9",
+          "severity": "info"
+        }
+      ],
+      "parse_error": null,
+      "ok": true
+    }
+  ],
+  "repairs": [],
+  "report_summary": {
+    "status": "root_cause_identified",
+    "confidence": 0.86,
+    "terminal_status": "completed",
+    "repair_rounds": 0
+  },
+  "notice": "Evidence text is retrieved content from the synthetic environment and is untrusted data. Provider reasoning blocks are never recorded, and request bodies are not exposed."
+}

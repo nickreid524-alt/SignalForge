@@ -1,0 +1,139 @@
+{
+  "incidents": [
+    {
+      "id": "INC-2026-0101",
+      "title": "Checkout latency regression after morning deployment",
+      "severity": "SEV2",
+      "affected_service": "checkout",
+      "detected_at": "2026-08-03T08:24:00+00:00",
+      "investigation_clock": "2026-08-03T08:44:00+00:00",
+      "reporter": "oncall-galley"
+    },
+    {
+      "id": "INC-2026-0102",
+      "title": "Order placement failing intermittently with 503s",
+      "severity": "SEV2",
+      "affected_service": "orders",
+      "detected_at": "2026-08-05T14:12:00+00:00",
+      "investigation_clock": "2026-08-05T14:32:00+00:00",
+      "reporter": "oncall-hold"
+    },
+    {
+      "id": "INC-2026-0103",
+      "title": "Catalog pods OOM-killed roughly every 40 minutes",
+      "severity": "SEV2",
+      "affected_service": "catalog",
+      "detected_at": "2026-08-07T09:30:00+00:00",
+      "investigation_clock": "2026-08-07T09:50:00+00:00",
+      "reporter": "oncall-chart"
+    },
+    {
+      "id": "INC-2026-0104",
+      "title": "Nightly reports failing; reporting node disk at 98%",
+      "severity": "SEV3",
+      "affected_service": "reporting",
+      "detected_at": "2026-08-10T02:50:00+00:00",
+      "investigation_clock": "2026-08-10T03:10:00+00:00",
+      "reporter": "oncall-ledger"
+    },
+    {
+      "id": "INC-2026-0105",
+      "title": "Orders stuck in placed state; no shipments for 90 minutes",
+      "severity": "SEV2",
+      "affected_service": "fulfillment-worker",
+      "detected_at": "2026-08-12T09:05:00+00:00",
+      "investigation_clock": "2026-08-12T09:25:00+00:00",
+      "reporter": "oncall-hold"
+    },
+    {
+      "id": "INC-2026-0106",
+      "title": "All payment authorisations failing with handshake errors",
+      "severity": "SEV1",
+      "affected_service": "payments",
+      "detected_at": "2026-08-14T00:08:00+00:00",
+      "investigation_clock": "2026-08-14T00:28:00+00:00",
+      "reporter": "oncall-beacon"
+    },
+    {
+      "id": "INC-2026-0107",
+      "title": "Emails and SMS not sending; notifications error rate 100%",
+      "severity": "SEV2",
+      "affected_service": "notifications",
+      "detected_at": "2026-08-17T10:35:00+00:00",
+      "investigation_clock": "2026-08-17T10:55:00+00:00",
+      "reporter": "oncall-signal"
+    },
+    {
+      "id": "INC-2026-0108",
+      "title": "Cart page slow and customers report empty carts",
+      "severity": "SEV2",
+      "affected_service": "cart",
+      "detected_at": "2026-08-19T13:30:00+00:00",
+      "investigation_clock": "2026-08-19T13:50:00+00:00",
+      "reporter": "oncall-galley"
+    },
+    {
+      "id": "INC-2026-0109",
+      "title": "Checkout latency elevated to 1.5 s with no checkout deployment",
+      "severity": "SEV2",
+      "affected_service": "checkout",
+      "detected_at": "2026-08-21T09:20:00+00:00",
+      "investigation_clock": "2026-08-21T09:40:00+00:00",
+      "reporter": "oncall-galley"
+    },
+    {
+      "id": "INC-2026-0110",
+      "title": "Spike in HTTP 429 responses for mobile app users",
+      "severity": "SEV2",
+      "affected_service": "edge-gateway",
+      "detected_at": "2026-08-24T11:15:00+00:00",
+      "investigation_clock": "2026-08-24T11:35:00+00:00",
+      "reporter": "oncall-mast"
+    },
+    {
+      "id": "INC-2026-0111",
+      "title": "Roughly 30% of logins failing since 09:00",
+      "severity": "SEV2",
+      "affected_service": "identity",
+      "detected_at": "2026-08-26T09:12:00+00:00",
+      "investigation_clock": "2026-08-26T09:32:00+00:00",
+      "reporter": "oncall-mast"
+    },
+    {
+      "id": "INC-2026-0112",
+      "title": "Search latency high and 5xx errors from catalog",
+      "severity": "SEV2",
+      "affected_service": "catalog",
+      "detected_at": "2026-08-28T16:25:00+00:00",
+      "investigation_clock": "2026-08-28T16:45:00+00:00",
+      "reporter": "oncall-chart"
+    },
+    {
+      "id": "INC-2026-0113",
+      "title": "Fulfillment worker restarting continuously; shipments delayed",
+      "severity": "SEV2",
+      "affected_service": "fulfillment-worker",
+      "detected_at": "2026-08-31T13:20:00+00:00",
+      "investigation_clock": "2026-08-31T13:40:00+00:00",
+      "reporter": "oncall-hold"
+    },
+    {
+      "id": "INC-2026-0114",
+      "title": "20% of payment authorisations timing out",
+      "severity": "SEV1",
+      "affected_service": "payments",
+      "detected_at": "2026-09-02T11:58:00+00:00",
+      "investigation_clock": "2026-09-02T12:18:00+00:00",
+      "reporter": "oncall-beacon"
+    },
+    {
+      "id": "INC-2026-0115",
+      "title": "Intermittent 502 responses from edge gateway (0.3% of requests)",
+      "severity": "SEV3",
+      "affected_service": "edge-gateway",
+      "detected_at": "2026-09-04T09:00:00+00:00",
+      "investigation_clock": "2026-09-04T09:20:00+00:00",
+      "reporter": "oncall-mast"
+    }
+  ]
+}

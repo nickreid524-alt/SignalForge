@@ -1,0 +1,66 @@
+{
+  "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+  "status": "completed",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "statement": "Checkout release v2026.08.03-1 set reservation.batch_mode=false, fanning out one inventory reserve call per line item and multiplying checkout latency",
+      "status": "supported",
+      "confidence": 0.85,
+      "supporting_evidence_ids": [
+        "EVD-000004#DEP-0038"
+      ],
+      "contradicting_evidence_ids": [],
+      "created_step": 1,
+      "updated_step": 2,
+      "revisions": [
+        {
+          "step": 1,
+          "status": "proposed",
+          "confidence": 0.5,
+          "supporting_evidence_ids": [],
+          "contradicting_evidence_ids": [],
+          "note": ""
+        },
+        {
+          "step": 2,
+          "status": "supported",
+          "confidence": 0.85,
+          "supporting_evidence_ids": [
+            "EVD-000004#DEP-0038"
+          ],
+          "contradicting_evidence_ids": [],
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "H2",
+      "statement": "PayVault latency is slowing checkout through payments",
+      "status": "refuted",
+      "confidence": 0.05,
+      "supporting_evidence_ids": [],
+      "contradicting_evidence_ids": [],
+      "created_step": 1,
+      "updated_step": 2,
+      "revisions": [
+        {
+          "step": 1,
+          "status": "proposed",
+          "confidence": 0.3,
+          "supporting_evidence_ids": [],
+          "contradicting_evidence_ids": [],
+          "note": "a PayVault latency alert fired at 08:20"
+        },
+        {
+          "step": 2,
+          "status": "refuted",
+          "confidence": 0.05,
+          "supporting_evidence_ids": [],
+          "contradicting_evidence_ids": [],
+          "note": "payments dependency latency is flat"
+        }
+      ]
+    }
+  ]
+}

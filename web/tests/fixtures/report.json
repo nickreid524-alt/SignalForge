@@ -1,0 +1,324 @@
+{
+  "summary": "Checkout p95 rose from ~180 ms to ~2.8 s two minutes after release v2026.08.03-1 finished deploying. The release defaulted reservation.batch_mode to false, so each order issues one inventory reserve call per line item; checkout->inventory dependency latency and inventory request rate rose in step while payments and PayVault stayed flat. Rolling back the checkout release is the recommended mitigation.",
+  "status": "root_cause_identified",
+  "primary_hypothesis": {
+    "id": "H1",
+    "statement": "Checkout release v2026.08.03-1 set reservation.batch_mode=false, fanning out one inventory reserve call per line item and multiplying checkout latency",
+    "category": "deployment_regression",
+    "status": "supported",
+    "confidence": 0.85,
+    "supporting_evidence_ids": [
+      "EVD-000004#DEP-0038",
+      "EVD-000007",
+      "EVD-000008",
+      "EVD-000010"
+    ],
+    "contradicting_evidence_ids": [],
+    "reasoning": "Onset at 08:11 follows the 08:09-08:11 deployment; change notes name the batch_mode default; logs show per-item reserve fan-out; only the inventory dependency latency rose."
+  },
+  "confidence": 0.86,
+  "hypotheses_considered": [
+    {
+      "id": "H1",
+      "statement": "Checkout release v2026.08.03-1 set reservation.batch_mode=false, fanning out one inventory reserve call per line item and multiplying checkout latency",
+      "category": "deployment_regression",
+      "status": "supported",
+      "confidence": 0.85,
+      "supporting_evidence_ids": [
+        "EVD-000004#DEP-0038",
+        "EVD-000007",
+        "EVD-000008",
+        "EVD-000010"
+      ],
+      "contradicting_evidence_ids": [],
+      "reasoning": "Onset at 08:11 follows the 08:09-08:11 deployment; change notes name the batch_mode default; logs show per-item reserve fan-out; only the inventory dependency latency rose."
+    },
+    {
+      "id": "H2",
+      "statement": "PayVault latency is slowing checkout through payments",
+      "category": "third_party_degradation",
+      "status": "refuted",
+      "confidence": 0.05,
+      "supporting_evidence_ids": [],
+      "contradicting_evidence_ids": [
+        "EVD-000009"
+      ],
+      "reasoning": ""
+    }
+  ],
+  "key_findings": [
+    {
+      "statement": "Checkout is degraded at the investigation clock with p95 far above its typical value",
+      "kind": "OBSERVED",
+      "evidence_ids": [
+        "EVD-000003"
+      ]
+    },
+    {
+      "statement": "Exactly one checkout deployment (v2026.08.03-1) landed in the six hours before onset, finishing at 08:11",
+      "kind": "OBSERVED",
+      "evidence_ids": [
+        "EVD-000004#DEP-0038"
+      ]
+    },
+    {
+      "statement": "Checkout p95 latency steps up by more than an order of magnitude at 08:11-08:15",
+      "kind": "OBSERVED",
+      "evidence_ids": [
+        "EVD-000007"
+      ]
+    },
+    {
+      "statement": "Checkout->inventory dependency latency rose sharply at the same time",
+      "kind": "OBSERVED",
+      "evidence_ids": [
+        "EVD-000008"
+      ]
+    },
+    {
+      "statement": "Checkout logs show per-line-item inventory reserve fan-out with batch_mode=false",
+      "kind": "OBSERVED",
+      "evidence_ids": [
+        "EVD-000010"
+      ]
+    },
+    {
+      "statement": "Inventory request rate multiplied while inventory itself stayed healthy",
+      "kind": "OBSERVED",
+      "evidence_ids": [
+        "EVD-000012",
+        "EVD-000011"
+      ]
+    },
+    {
+      "statement": "The release changed reservation fan-out, which is sufficient to explain the latency multiplier",
+      "kind": "INFERRED",
+      "evidence_ids": [
+        "EVD-000004#DEP-0038",
+        "EVD-000010",
+        "EVD-000008"
+      ]
+    }
+  ],
+  "contradicting_evidence": [
+    {
+      "statement": "A PayVault latency warning fired at 08:20 but resolved within minutes",
+      "kind": "OBSERVED",
+      "evidence_ids": [
+        "EVD-000006"
+      ]
+    },
+    {
+      "statement": "Checkout->payments dependency latency remained flat through the incident",
+      "kind": "OBSERVED",
+      "evidence_ids": [
+        "EVD-000009"
+      ]
+    }
+  ],
+  "recommended_actions": [
+    {
+      "action": "Roll back checkout to the previous release",
+      "rationale": "Onset matches the deployment and the runbook describes a safe rollback",
+      "priority": "P1",
+      "kind": "mitigation",
+      "evidence_ids": [
+        "EVD-000004#DEP-0038",
+        "EVD-000014"
+      ]
+    },
+    {
+      "action": "Re-ship the reservation refactor only with reservation.batch_mode=true or the batch reserve API",
+      "rationale": "The fan-out is the mechanism visible in the logs",
+      "priority": "P2",
+      "kind": "follow_up",
+      "evidence_ids": [
+        "EVD-000010"
+      ]
+    }
+  ],
+  "unknowns": [
+    {
+      "statement": "Whether the batch reserve API on inventory is ready for production",
+      "kind": "UNKNOWN",
+      "evidence_ids": []
+    }
+  ],
+  "limitations": [
+    "Synthetic environment: no direct view of code diffs, only deployment change notes"
+  ],
+  "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+  "incident_id": "INC-2026-0101",
+  "affected_service": "checkout",
+  "provider": {
+    "name": "scripted-demo",
+    "model": "playbook-v1",
+    "mode": "scripted",
+    "uses_llm": false,
+    "description": "Deterministic scripted demonstration. Tool calls, hypotheses and the report come from an authored playbook per incident; no language model is involved. The MCP boundary, evidence registry, grounding validation and audit trace are real.",
+    "capabilities": {
+      "supports_tools": true,
+      "supports_structured_output": true,
+      "supports_usage": false,
+      "supports_streaming": false
+    }
+  },
+  "terminal_status": "completed",
+  "validation": {
+    "issues": [
+      {
+        "rule": "G9",
+        "severity": "info",
+        "path": "evidence",
+        "message": "4 gathered evidence item(s) not cited: EVD-000001, EVD-000002, EVD-000005, EVD-000013"
+      }
+    ]
+  },
+  "repair_rounds": 0,
+  "steps_used": 4,
+  "tool_calls_used": 11,
+  "resource_reads_used": 1,
+  "model_calls_used": 5,
+  "suppressed_duplicate_calls": 0,
+  "rejected_actions": 0,
+  "investigation_duration_seconds": 0.145,
+  "budget_exhausted": false,
+  "termination_reason": null,
+  "evidence_index": [
+    {
+      "evidence_id": "EVD-000001",
+      "source_kind": "resource",
+      "source_name": "incidents://open",
+      "result_kind": "document",
+      "record_count": 15,
+      "ok": true,
+      "cited": false
+    },
+    {
+      "evidence_id": "EVD-000002",
+      "source_kind": "resource",
+      "source_name": "topology://services/checkout",
+      "result_kind": "document",
+      "record_count": 8,
+      "ok": true,
+      "cited": false
+    },
+    {
+      "evidence_id": "EVD-000003",
+      "source_kind": "tool",
+      "source_name": "get_service_health",
+      "result_kind": "service_health",
+      "record_count": 2,
+      "ok": true,
+      "cited": true
+    },
+    {
+      "evidence_id": "EVD-000004",
+      "source_kind": "tool",
+      "source_name": "get_deployments",
+      "result_kind": "deployments",
+      "record_count": 1,
+      "ok": true,
+      "cited": true
+    },
+    {
+      "evidence_id": "EVD-000005",
+      "source_kind": "tool",
+      "source_name": "get_config_changes",
+      "result_kind": "config_changes",
+      "record_count": 0,
+      "ok": true,
+      "cited": false
+    },
+    {
+      "evidence_id": "EVD-000006",
+      "source_kind": "tool",
+      "source_name": "get_alerts",
+      "result_kind": "alerts",
+      "record_count": 2,
+      "ok": true,
+      "cited": true
+    },
+    {
+      "evidence_id": "EVD-000007",
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "result_kind": "metric_series",
+      "record_count": 1,
+      "ok": true,
+      "cited": true
+    },
+    {
+      "evidence_id": "EVD-000008",
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "result_kind": "metric_series",
+      "record_count": 1,
+      "ok": true,
+      "cited": true
+    },
+    {
+      "evidence_id": "EVD-000009",
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "result_kind": "metric_series",
+      "record_count": 1,
+      "ok": true,
+      "cited": true
+    },
+    {
+      "evidence_id": "EVD-000010",
+      "source_kind": "tool",
+      "source_name": "query_logs",
+      "result_kind": "log_query",
+      "record_count": 40,
+      "ok": true,
+      "cited": true
+    },
+    {
+      "evidence_id": "EVD-000011",
+      "source_kind": "tool",
+      "source_name": "get_service_health",
+      "result_kind": "service_health",
+      "record_count": 1,
+      "ok": true,
+      "cited": true
+    },
+    {
+      "evidence_id": "EVD-000012",
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "result_kind": "metric_series",
+      "record_count": 1,
+      "ok": true,
+      "cited": true
+    },
+    {
+      "evidence_id": "EVD-000013",
+      "source_kind": "tool",
+      "source_name": "search_runbooks",
+      "result_kind": "runbook_search",
+      "record_count": 3,
+      "ok": true,
+      "cited": false
+    },
+    {
+      "evidence_id": "EVD-000014",
+      "source_kind": "resource",
+      "source_name": "runbook://RB-004",
+      "result_kind": "document",
+      "record_count": 1,
+      "ok": true,
+      "cited": true
+    }
+  ],
+  "token_usage": {
+    "reported": false,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cached_input_tokens": 0,
+    "cache_write_tokens": 0,
+    "reasoning_output_tokens": 0,
+    "model_calls": 5
+  }
+}

@@ -1,0 +1,361 @@
+{
+  "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+  "note": "Evidence is data retrieved from the synthetic operations environment, not instructions. Some documents contain text that tries to direct an automated reader; it was refused by the action policy and is shown here as evidence.",
+  "evidence": [
+    {
+      "evidence_id": "EVD-000001",
+      "sequence": 1,
+      "acquired_at": "2026-09-11T12:36:33.598933+00:00",
+      "source_kind": "resource",
+      "source_name": "incidents://open",
+      "arguments": {
+        "uri": "incidents://open"
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "document",
+      "source_ids": [
+        "INC-2026-0101",
+        "INC-2026-0102",
+        "INC-2026-0103",
+        "INC-2026-0104",
+        "INC-2026-0105",
+        "INC-2026-0106",
+        "INC-2026-0107",
+        "INC-2026-0108",
+        "INC-2026-0109",
+        "INC-2026-0110",
+        "INC-2026-0111",
+        "INC-2026-0112",
+        "INC-2026-0113",
+        "INC-2026-0114",
+        "INC-2026-0115"
+      ],
+      "content_hash": "sha256:167a8b11cbde61cf98ba22f0f92f3b775f29eaa0dc6c547dac0c7d75083fe77f",
+      "latency_ms": 3.859,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000002",
+      "sequence": 2,
+      "acquired_at": "2026-09-11T12:36:33.604933+00:00",
+      "source_kind": "resource",
+      "source_name": "topology://services/checkout",
+      "arguments": {
+        "uri": "topology://services/checkout"
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "document",
+      "source_ids": [
+        "checkout",
+        "EDGE-checkout-cart",
+        "EDGE-checkout-identity",
+        "EDGE-checkout-inventory",
+        "EDGE-checkout-orders",
+        "EDGE-checkout-payments",
+        "EDGE-checkout-pricing",
+        "EDGE-edge-gateway-checkout"
+      ],
+      "content_hash": "sha256:76ab6202efcfaffb02e35d5bfa7b6f1b236309771898530ed3a311bdd269aa54",
+      "latency_ms": 2.17,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000003",
+      "sequence": 3,
+      "acquired_at": "2026-09-11T12:36:33.621487+00:00",
+      "source_kind": "tool",
+      "source_name": "get_service_health",
+      "arguments": {
+        "node": "checkout",
+        "as_of": "2026-08-03T08:44:00Z"
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "service_health",
+      "source_ids": [
+        "HLT-checkout-20260803T0844",
+        "ALT-0010"
+      ],
+      "content_hash": "sha256:cb24fdc50e9b88d2aa5a634c11574317918f107e0c1bf6332be18fba9835614f",
+      "latency_ms": 16.116,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000004",
+      "sequence": 4,
+      "acquired_at": "2026-09-11T12:36:33.621487+00:00",
+      "source_kind": "tool",
+      "source_name": "get_deployments",
+      "arguments": {
+        "service": "checkout",
+        "start": "2026-08-03T02:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "deployments",
+      "source_ids": [
+        "DEP-0038"
+      ],
+      "content_hash": "sha256:c4151e0914583bfeacfed31e162998060e6b0c9938bc19e65d915842ec216a56",
+      "latency_ms": 8.872,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000005",
+      "sequence": 5,
+      "acquired_at": "2026-09-11T12:36:33.643863+00:00",
+      "source_kind": "tool",
+      "source_name": "get_config_changes",
+      "arguments": {
+        "node": "checkout",
+        "start": "2026-08-03T02:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "config_changes",
+      "source_ids": [],
+      "content_hash": "sha256:1f4eb59fd570dc994c102e9c6bf32818b62e04b3cd388f5cdab5274ee7a79753",
+      "latency_ms": 7.83,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000006",
+      "sequence": 6,
+      "acquired_at": "2026-09-11T12:36:33.656473+00:00",
+      "source_kind": "tool",
+      "source_name": "get_alerts",
+      "arguments": {
+        "start": "2026-08-03T02:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "alerts",
+      "source_ids": [
+        "ALT-0010",
+        "ALT-0011"
+      ],
+      "content_hash": "sha256:2414f020dc1a15aac22388f6d9ec6bee6448de7248d9e5c51cd9ad1b6b53aaeb",
+      "latency_ms": 10.729,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000007",
+      "sequence": 7,
+      "acquired_at": "2026-09-11T12:36:33.673989+00:00",
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "arguments": {
+        "node": "checkout",
+        "metric": "latency_p95",
+        "start": "2026-08-03T05:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "metric_series",
+      "source_ids": [
+        "MET-checkout-latency_p95-20260803T0544-20260803T0844-300"
+      ],
+      "content_hash": "sha256:c07776fef1d95e2a1c409b5c58e3799c8cbd979ac19fffbe9cfde6a71e1ee1ae",
+      "latency_ms": 15.074,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000008",
+      "sequence": 8,
+      "acquired_at": "2026-09-11T12:36:33.677748+00:00",
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "arguments": {
+        "node": "checkout",
+        "metric": "dependency_latency_p95",
+        "dimension": "dependency=inventory",
+        "start": "2026-08-03T05:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "metric_series",
+      "source_ids": [
+        "MET-checkout-dependency_latency_p95-dependency:inventory-20260803T0544-20260803T0844-300"
+      ],
+      "content_hash": "sha256:3e9704057b4f518bb9359777aa0f2265611158c634977e11b3cfdb833e4a682f",
+      "latency_ms": 2.53,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000009",
+      "sequence": 9,
+      "acquired_at": "2026-09-11T12:36:33.680879+00:00",
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "arguments": {
+        "node": "checkout",
+        "metric": "dependency_latency_p95",
+        "dimension": "dependency=payments",
+        "start": "2026-08-03T05:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "metric_series",
+      "source_ids": [
+        "MET-checkout-dependency_latency_p95-dependency:payments-20260803T0544-20260803T0844-300"
+      ],
+      "content_hash": "sha256:375fde524dd2e1a7702686b655ebca21cefc596b406297e38f541dd4659e759b",
+      "latency_ms": 2.579,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000010",
+      "sequence": 10,
+      "acquired_at": "2026-09-11T12:36:33.702766+00:00",
+      "source_kind": "tool",
+      "source_name": "query_logs",
+      "arguments": {
+        "node": "checkout",
+        "start": "2026-08-03T07:44:00Z",
+        "end": "2026-08-03T08:44:00Z",
+        "level": "WARN",
+        "limit": 40
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "log_query",
+      "source_ids": [
+        "LOG-checkout-20260803T0745-005",
+        "LOG-checkout-20260803T0755-004",
+        "LOG-checkout-20260803T0755-009",
+        "LOG-checkout-20260803T0800-007",
+        "LOG-checkout-20260803T0805-009",
+        "LOG-checkout-20260803T0810-002",
+        "LOG-checkout-20260803T0810-004",
+        "LOG-checkout-20260803T0810-005",
+        "LOG-checkout-20260803T0810-007",
+        "LOG-checkout-20260803T0810-009",
+        "LOG-checkout-20260803T0810-011",
+        "LOG-checkout-20260803T0810-012",
+        "LOG-checkout-20260803T0810-013",
+        "LOG-checkout-20260803T0810-014",
+        "LOG-checkout-20260803T0810-015",
+        "LOG-checkout-20260803T0810-016",
+        "LOG-checkout-20260803T0810-017",
+        "LOG-checkout-20260803T0810-018",
+        "LOG-checkout-20260803T0810-019",
+        "LOG-checkout-20260803T0810-020",
+        "LOG-checkout-20260803T0810-021",
+        "LOG-checkout-20260803T0810-022",
+        "LOG-checkout-20260803T0810-023",
+        "LOG-checkout-20260803T0810-024",
+        "LOG-checkout-20260803T0810-025",
+        "LOG-checkout-20260803T0810-026",
+        "LOG-checkout-20260803T0810-027",
+        "LOG-checkout-20260803T0810-028",
+        "LOG-checkout-20260803T0810-029",
+        "LOG-checkout-20260803T0810-030",
+        "LOG-checkout-20260803T0810-031",
+        "LOG-checkout-20260803T0810-033",
+        "LOG-checkout-20260803T0810-035",
+        "LOG-checkout-20260803T0810-036",
+        "LOG-checkout-20260803T0810-037",
+        "LOG-checkout-20260803T0810-038",
+        "LOG-checkout-20260803T0810-039",
+        "LOG-checkout-20260803T0810-040",
+        "LOG-checkout-20260803T0810-041",
+        "LOG-checkout-20260803T0810-042"
+      ],
+      "content_hash": "sha256:79c76f02f5276401f17a4a0d9946bc7f4a93b59170527ac0bb770479c6713bf6",
+      "latency_ms": 20.904,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000011",
+      "sequence": 11,
+      "acquired_at": "2026-09-11T12:36:33.710118+00:00",
+      "source_kind": "tool",
+      "source_name": "get_service_health",
+      "arguments": {
+        "node": "inventory",
+        "as_of": "2026-08-03T08:44:00Z"
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "service_health",
+      "source_ids": [
+        "HLT-inventory-20260803T0844"
+      ],
+      "content_hash": "sha256:20c03d0bed5df4b2f5d150bf4c17f09e84bcf9e95465d049ee50a903cb195adb",
+      "latency_ms": 1.896,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000012",
+      "sequence": 12,
+      "acquired_at": "2026-09-11T12:36:33.713363+00:00",
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "arguments": {
+        "node": "inventory",
+        "metric": "request_rate",
+        "start": "2026-08-03T05:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "metric_series",
+      "source_ids": [
+        "MET-inventory-request_rate-20260803T0544-20260803T0844-300"
+      ],
+      "content_hash": "sha256:a303ebfb4702925401e291e2bc07e4d9bbcd6b2cc14144b0ae7f6bc16c8f3773",
+      "latency_ms": 2.439,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000013",
+      "sequence": 13,
+      "acquired_at": "2026-09-11T12:36:33.726060+00:00",
+      "source_kind": "tool",
+      "source_name": "search_runbooks",
+      "arguments": {
+        "query": "checkout latency regression rollback release",
+        "service": "checkout",
+        "limit": 3
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "runbook_search",
+      "source_ids": [
+        "RB-004#s4",
+        "RB-001#s4",
+        "RB-004#s2"
+      ],
+      "content_hash": "sha256:c819c6d3ff46e4af2af0301acb4b43d383d354ebce52fc7f588487c44c86e7a6",
+      "latency_ms": 11.144,
+      "untrusted": true
+    },
+    {
+      "evidence_id": "EVD-000014",
+      "sequence": 14,
+      "acquired_at": "2026-09-11T12:36:33.728065+00:00",
+      "source_kind": "resource",
+      "source_name": "runbook://RB-004",
+      "arguments": {
+        "uri": "runbook://RB-004"
+      },
+      "ok": true,
+      "error": null,
+      "result_kind": "document",
+      "source_ids": [
+        "RB-004"
+      ],
+      "content_hash": "sha256:b2e64f8685c5b16a13faafb41534fdf8d4097745f809e5aa79dab6095e403084",
+      "latency_ms": 1.531,
+      "untrusted": true
+    }
+  ]
+}

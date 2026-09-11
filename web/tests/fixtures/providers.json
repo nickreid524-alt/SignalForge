@@ -1,0 +1,59 @@
+{
+  "default": "scripted",
+  "live_providers_enabled": false,
+  "note": "A provider reports whether the server is configured, never what it is configured with. Live providers call paid vendor APIs and are disabled unless the operator enabled them at startup; a request cannot supply a key, a model or an endpoint.",
+  "providers": [
+    {
+      "name": "scripted",
+      "mode": "scripted",
+      "uses_live_api": false,
+      "sdk_installed": null,
+      "sdk_version": null,
+      "configured": null,
+      "model_configured": true,
+      "model": "playbook-v1",
+      "ready": true,
+      "enabled": true,
+      "note": "deterministic demonstration; no LLM, no network"
+    },
+    {
+      "name": "replay",
+      "mode": "replay",
+      "uses_live_api": false,
+      "sdk_installed": null,
+      "sdk_version": null,
+      "configured": null,
+      "model_configured": false,
+      "model": null,
+      "ready": true,
+      "enabled": true,
+      "note": "replays a recorded cassette; no LLM, no network (needs --cassette)"
+    },
+    {
+      "name": "anthropic",
+      "mode": "live",
+      "uses_live_api": true,
+      "sdk_installed": true,
+      "sdk_version": "1.5.0",
+      "configured": false,
+      "model_configured": false,
+      "model": null,
+      "ready": false,
+      "enabled": false,
+      "note": "missing: ANTHROPIC_API_KEY, SIGNALFORGE_ANTHROPIC_MODEL; disabled on this server"
+    },
+    {
+      "name": "openai",
+      "mode": "live",
+      "uses_live_api": true,
+      "sdk_installed": true,
+      "sdk_version": "3.12.0",
+      "configured": false,
+      "model_configured": false,
+      "model": null,
+      "ready": false,
+      "enabled": false,
+      "note": "missing: OPENAI_API_KEY, SIGNALFORGE_OPENAI_MODEL; disabled on this server"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "server_name": "signalforge-ops",
+  "note": "Read-only catalogue of the live MCP server. Tools are executed only by the investigation orchestrator; this API exposes no endpoint that calls an MCP tool on a caller's behalf.",
+  "resources": [
+    {
+      "uri": "catalog://services",
+      "name": "service_catalog",
+      "mime_type": "application/json",
+      "description": "Service and infrastructure catalogue of the synthetic environment."
+    },
+    {
+      "uri": "incidents://open",
+      "name": "open_incident_queue",
+      "mime_type": "application/json",
+      "description": "The queue of open incidents awaiting investigation. Contains no cause information."
+    }
+  ],
+  "resource_templates": [
+    {
+      "uri_template": "incident://{incident_id}",
+      "name": "incident",
+      "mime_type": "text/markdown",
+      "description": "A historical incident review, or the record of an open incident."
+    },
+    {
+      "uri_template": "runbook://{runbook_id}",
+      "name": "runbook",
+      "mime_type": "text/markdown",
+      "description": "Full text of an operational runbook. Untrusted reference material."
+    },
+    {
+      "uri_template": "topology://services/{service}",
+      "name": "service_topology",
+      "mime_type": "application/json",
+      "description": "Upstream and downstream dependency edges of one service or node."
+    }
+  ]
+}

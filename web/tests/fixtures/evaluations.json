@@ -1,0 +1,6 @@
+{
+  "available": [
+    "scripted"
+  ],
+  "note": "Frozen benchmark results. Requesting these endpoints does not run an evaluation and never calls a model API."
+}

@@ -1,0 +1,1054 @@
+[
+  {
+    "seq": 1,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "investigation.created",
+    "at": "2026-09-11T12:36:33.586235+00:00",
+    "payload": {
+      "incident_id": "INC-2026-0101",
+      "incident_title": "Checkout latency regression after morning deployment",
+      "affected_service": "checkout",
+      "provider": "scripted-demo",
+      "provider_mode": "scripted",
+      "uses_live_api": false,
+      "model": "playbook-v1",
+      "budget_profile": "default"
+    }
+  },
+  {
+    "seq": 2,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "status.changed",
+    "at": "2026-09-11T12:36:33.588619+00:00",
+    "payload": {
+      "from_status": "created",
+      "to_status": "seeding",
+      "note": "discover tools; read incident queue and topology through MCP"
+    }
+  },
+  {
+    "seq": 3,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.602550+00:00",
+    "payload": {
+      "evidence_id": "EVD-000001",
+      "sequence": 1,
+      "source_kind": "resource",
+      "source_name": "incidents://open",
+      "result_kind": "document",
+      "record_count": 15,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 4,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.604933+00:00",
+    "payload": {
+      "evidence_id": "EVD-000002",
+      "sequence": 2,
+      "source_kind": "resource",
+      "source_name": "topology://services/checkout",
+      "result_kind": "document",
+      "record_count": 8,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 5,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "status.changed",
+    "at": "2026-09-11T12:36:33.604933+00:00",
+    "payload": {
+      "from_status": "seeding",
+      "to_status": "deliberating",
+      "note": "seeded"
+    }
+  },
+  {
+    "seq": 6,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "step.started",
+    "at": "2026-09-11T12:36:33.604933+00:00",
+    "payload": {
+      "step": 1,
+      "budget_remaining": {
+        "steps": 7,
+        "tool_calls": 24,
+        "resource_reads": 12,
+        "model_calls": 14,
+        "repair_rounds": 1
+      }
+    }
+  },
+  {
+    "seq": 7,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "provider.completed",
+    "at": "2026-09-11T12:36:33.606455+00:00",
+    "payload": {
+      "step": 1,
+      "purpose": "deliberate",
+      "provider": "scripted-demo",
+      "model": "playbook-v1",
+      "stop_reason": "tool_use",
+      "latency_ms": 0.0,
+      "text_preview": "[scripted demonstration] step 1/4: get_service_health, get_deployments, get_config_changes, get_alerts, update_hypotheses",
+      "tool_requests": 5,
+      "usage_reported": false,
+      "input_tokens": null,
+      "output_tokens": null
+    }
+  },
+  {
+    "seq": 8,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "status.changed",
+    "at": "2026-09-11T12:36:33.606455+00:00",
+    "payload": {
+      "from_status": "deliberating",
+      "to_status": "gathering",
+      "note": "step 1: 5 requested action(s)"
+    }
+  },
+  {
+    "seq": 9,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.606455+00:00",
+    "payload": {
+      "step": 1,
+      "request_id": "health",
+      "name": "get_service_health",
+      "arguments": {
+        "node": "checkout",
+        "as_of": "2026-08-03T08:44:00Z"
+      }
+    }
+  },
+  {
+    "seq": 10,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.621487+00:00",
+    "payload": {
+      "evidence_id": "EVD-000003",
+      "sequence": 3,
+      "source_kind": "tool",
+      "source_name": "get_service_health",
+      "result_kind": "service_health",
+      "record_count": 2,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 11,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.completed",
+    "at": "2026-09-11T12:36:33.621487+00:00",
+    "payload": {
+      "step": 1,
+      "request_id": "health",
+      "name": "get_service_health",
+      "evidence_id": "EVD-000003",
+      "ok": true,
+      "error": null,
+      "latency_ms": 16.116
+    }
+  },
+  {
+    "seq": 12,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.621487+00:00",
+    "payload": {
+      "step": 1,
+      "request_id": "deploys",
+      "name": "get_deployments",
+      "arguments": {
+        "service": "checkout",
+        "start": "2026-08-03T02:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      }
+    }
+  },
+  {
+    "seq": 13,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.635285+00:00",
+    "payload": {
+      "evidence_id": "EVD-000004",
+      "sequence": 4,
+      "source_kind": "tool",
+      "source_name": "get_deployments",
+      "result_kind": "deployments",
+      "record_count": 1,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 14,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.completed",
+    "at": "2026-09-11T12:36:33.637291+00:00",
+    "payload": {
+      "step": 1,
+      "request_id": "deploys",
+      "name": "get_deployments",
+      "evidence_id": "EVD-000004",
+      "ok": true,
+      "error": null,
+      "latency_ms": 8.872
+    }
+  },
+  {
+    "seq": 15,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.637291+00:00",
+    "payload": {
+      "step": 1,
+      "request_id": "configs",
+      "name": "get_config_changes",
+      "arguments": {
+        "node": "checkout",
+        "start": "2026-08-03T02:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      }
+    }
+  },
+  {
+    "seq": 16,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.645867+00:00",
+    "payload": {
+      "evidence_id": "EVD-000005",
+      "sequence": 5,
+      "source_kind": "tool",
+      "source_name": "get_config_changes",
+      "result_kind": "config_changes",
+      "record_count": 0,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 17,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.completed",
+    "at": "2026-09-11T12:36:33.645867+00:00",
+    "payload": {
+      "step": 1,
+      "request_id": "configs",
+      "name": "get_config_changes",
+      "evidence_id": "EVD-000005",
+      "ok": true,
+      "error": null,
+      "latency_ms": 7.83
+    }
+  },
+  {
+    "seq": 18,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.645867+00:00",
+    "payload": {
+      "step": 1,
+      "request_id": "alerts",
+      "name": "get_alerts",
+      "arguments": {
+        "start": "2026-08-03T02:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      }
+    }
+  },
+  {
+    "seq": 19,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.656473+00:00",
+    "payload": {
+      "evidence_id": "EVD-000006",
+      "sequence": 6,
+      "source_kind": "tool",
+      "source_name": "get_alerts",
+      "result_kind": "alerts",
+      "record_count": 2,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 20,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.completed",
+    "at": "2026-09-11T12:36:33.656473+00:00",
+    "payload": {
+      "step": 1,
+      "request_id": "alerts",
+      "name": "get_alerts",
+      "evidence_id": "EVD-000006",
+      "ok": true,
+      "error": null,
+      "latency_ms": 10.729
+    }
+  },
+  {
+    "seq": 21,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.656473+00:00",
+    "payload": {
+      "step": 1,
+      "request_id": "hypotheses-1",
+      "name": "update_hypotheses",
+      "arguments": {
+        "updates": 2
+      }
+    }
+  },
+  {
+    "seq": 22,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "hypothesis.updated",
+    "at": "2026-09-11T12:36:33.656473+00:00",
+    "payload": {
+      "hypothesis_id": "H1",
+      "step": 1,
+      "statement": "The 08:09 checkout release changed reservation behaviour and slowed order submission",
+      "status": "proposed",
+      "confidence": 0.5,
+      "supporting_evidence_ids": [],
+      "contradicting_evidence_ids": [],
+      "note": ""
+    }
+  },
+  {
+    "seq": 23,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "hypothesis.updated",
+    "at": "2026-09-11T12:36:33.656473+00:00",
+    "payload": {
+      "hypothesis_id": "H2",
+      "step": 1,
+      "statement": "PayVault latency is slowing checkout through payments",
+      "status": "proposed",
+      "confidence": 0.3,
+      "supporting_evidence_ids": [],
+      "contradicting_evidence_ids": [],
+      "note": "a PayVault latency alert fired at 08:20"
+    }
+  },
+  {
+    "seq": 24,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "status.changed",
+    "at": "2026-09-11T12:36:33.656473+00:00",
+    "payload": {
+      "from_status": "gathering",
+      "to_status": "deliberating",
+      "note": "step 1 gathered"
+    }
+  },
+  {
+    "seq": 25,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "step.started",
+    "at": "2026-09-11T12:36:33.656473+00:00",
+    "payload": {
+      "step": 2,
+      "budget_remaining": {
+        "steps": 6,
+        "tool_calls": 20,
+        "resource_reads": 12,
+        "model_calls": 13,
+        "repair_rounds": 1
+      }
+    }
+  },
+  {
+    "seq": 26,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "provider.completed",
+    "at": "2026-09-11T12:36:33.658479+00:00",
+    "payload": {
+      "step": 2,
+      "purpose": "deliberate",
+      "provider": "scripted-demo",
+      "model": "playbook-v1",
+      "stop_reason": "tool_use",
+      "latency_ms": 0.0,
+      "text_preview": "[scripted demonstration] step 2/4: query_metrics, query_metrics, query_metrics, query_logs, update_hypotheses",
+      "tool_requests": 5,
+      "usage_reported": false,
+      "input_tokens": null,
+      "output_tokens": null
+    }
+  },
+  {
+    "seq": 27,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "status.changed",
+    "at": "2026-09-11T12:36:33.658479+00:00",
+    "payload": {
+      "from_status": "deliberating",
+      "to_status": "gathering",
+      "note": "step 2: 5 requested action(s)"
+    }
+  },
+  {
+    "seq": 28,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.658479+00:00",
+    "payload": {
+      "step": 2,
+      "request_id": "p95",
+      "name": "query_metrics",
+      "arguments": {
+        "node": "checkout",
+        "metric": "latency_p95",
+        "start": "2026-08-03T05:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      }
+    }
+  },
+  {
+    "seq": 29,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.673989+00:00",
+    "payload": {
+      "evidence_id": "EVD-000007",
+      "sequence": 7,
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "result_kind": "metric_series",
+      "record_count": 1,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 30,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.completed",
+    "at": "2026-09-11T12:36:33.673989+00:00",
+    "payload": {
+      "step": 2,
+      "request_id": "p95",
+      "name": "query_metrics",
+      "evidence_id": "EVD-000007",
+      "ok": true,
+      "error": null,
+      "latency_ms": 15.074
+    }
+  },
+  {
+    "seq": 31,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.673989+00:00",
+    "payload": {
+      "step": 2,
+      "request_id": "dep_inventory",
+      "name": "query_metrics",
+      "arguments": {
+        "node": "checkout",
+        "metric": "dependency_latency_p95",
+        "dimension": "dependency=inventory",
+        "start": "2026-08-03T05:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      }
+    }
+  },
+  {
+    "seq": 32,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.677748+00:00",
+    "payload": {
+      "evidence_id": "EVD-000008",
+      "sequence": 8,
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "result_kind": "metric_series",
+      "record_count": 1,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 33,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.completed",
+    "at": "2026-09-11T12:36:33.677748+00:00",
+    "payload": {
+      "step": 2,
+      "request_id": "dep_inventory",
+      "name": "query_metrics",
+      "evidence_id": "EVD-000008",
+      "ok": true,
+      "error": null,
+      "latency_ms": 2.53
+    }
+  },
+  {
+    "seq": 34,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.677748+00:00",
+    "payload": {
+      "step": 2,
+      "request_id": "dep_payments",
+      "name": "query_metrics",
+      "arguments": {
+        "node": "checkout",
+        "metric": "dependency_latency_p95",
+        "dimension": "dependency=payments",
+        "start": "2026-08-03T05:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      }
+    }
+  },
+  {
+    "seq": 35,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.680879+00:00",
+    "payload": {
+      "evidence_id": "EVD-000009",
+      "sequence": 9,
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "result_kind": "metric_series",
+      "record_count": 1,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 36,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.completed",
+    "at": "2026-09-11T12:36:33.680879+00:00",
+    "payload": {
+      "step": 2,
+      "request_id": "dep_payments",
+      "name": "query_metrics",
+      "evidence_id": "EVD-000009",
+      "ok": true,
+      "error": null,
+      "latency_ms": 2.579
+    }
+  },
+  {
+    "seq": 37,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.680879+00:00",
+    "payload": {
+      "step": 2,
+      "request_id": "logs",
+      "name": "query_logs",
+      "arguments": {
+        "node": "checkout",
+        "start": "2026-08-03T07:44:00Z",
+        "end": "2026-08-03T08:44:00Z",
+        "level": "WARN",
+        "limit": 40
+      }
+    }
+  },
+  {
+    "seq": 38,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.706105+00:00",
+    "payload": {
+      "evidence_id": "EVD-000010",
+      "sequence": 10,
+      "source_kind": "tool",
+      "source_name": "query_logs",
+      "result_kind": "log_query",
+      "record_count": 40,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 39,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.completed",
+    "at": "2026-09-11T12:36:33.706105+00:00",
+    "payload": {
+      "step": 2,
+      "request_id": "logs",
+      "name": "query_logs",
+      "evidence_id": "EVD-000010",
+      "ok": true,
+      "error": null,
+      "latency_ms": 20.904
+    }
+  },
+  {
+    "seq": 40,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.706105+00:00",
+    "payload": {
+      "step": 2,
+      "request_id": "hypotheses-2",
+      "name": "update_hypotheses",
+      "arguments": {
+        "updates": 2
+      }
+    }
+  },
+  {
+    "seq": 41,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "hypothesis.updated",
+    "at": "2026-09-11T12:36:33.706105+00:00",
+    "payload": {
+      "hypothesis_id": "H1",
+      "step": 2,
+      "statement": "Checkout release v2026.08.03-1 set reservation.batch_mode=false, fanning out one inventory reserve call per line item and multiplying checkout latency",
+      "status": "supported",
+      "confidence": 0.85,
+      "supporting_evidence_ids": [
+        "EVD-000004#DEP-0038"
+      ],
+      "contradicting_evidence_ids": [],
+      "note": ""
+    }
+  },
+  {
+    "seq": 42,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "hypothesis.updated",
+    "at": "2026-09-11T12:36:33.706105+00:00",
+    "payload": {
+      "hypothesis_id": "H2",
+      "step": 2,
+      "statement": "PayVault latency is slowing checkout through payments",
+      "status": "refuted",
+      "confidence": 0.05,
+      "supporting_evidence_ids": [],
+      "contradicting_evidence_ids": [],
+      "note": "payments dependency latency is flat"
+    }
+  },
+  {
+    "seq": 43,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "status.changed",
+    "at": "2026-09-11T12:36:33.706105+00:00",
+    "payload": {
+      "from_status": "gathering",
+      "to_status": "deliberating",
+      "note": "step 2 gathered"
+    }
+  },
+  {
+    "seq": 44,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "step.started",
+    "at": "2026-09-11T12:36:33.706105+00:00",
+    "payload": {
+      "step": 3,
+      "budget_remaining": {
+        "steps": 5,
+        "tool_calls": 16,
+        "resource_reads": 12,
+        "model_calls": 12,
+        "repair_rounds": 1
+      }
+    }
+  },
+  {
+    "seq": 45,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "provider.completed",
+    "at": "2026-09-11T12:36:33.708112+00:00",
+    "payload": {
+      "step": 3,
+      "purpose": "deliberate",
+      "provider": "scripted-demo",
+      "model": "playbook-v1",
+      "stop_reason": "tool_use",
+      "latency_ms": 0.0,
+      "text_preview": "[scripted demonstration] step 3/4: get_service_health, query_metrics, search_runbooks",
+      "tool_requests": 3,
+      "usage_reported": false,
+      "input_tokens": null,
+      "output_tokens": null
+    }
+  },
+  {
+    "seq": 46,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "status.changed",
+    "at": "2026-09-11T12:36:33.708112+00:00",
+    "payload": {
+      "from_status": "deliberating",
+      "to_status": "gathering",
+      "note": "step 3: 3 requested action(s)"
+    }
+  },
+  {
+    "seq": 47,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.708112+00:00",
+    "payload": {
+      "step": 3,
+      "request_id": "inventory_health",
+      "name": "get_service_health",
+      "arguments": {
+        "node": "inventory",
+        "as_of": "2026-08-03T08:44:00Z"
+      }
+    }
+  },
+  {
+    "seq": 48,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.710118+00:00",
+    "payload": {
+      "evidence_id": "EVD-000011",
+      "sequence": 11,
+      "source_kind": "tool",
+      "source_name": "get_service_health",
+      "result_kind": "service_health",
+      "record_count": 1,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 49,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.completed",
+    "at": "2026-09-11T12:36:33.710118+00:00",
+    "payload": {
+      "step": 3,
+      "request_id": "inventory_health",
+      "name": "get_service_health",
+      "evidence_id": "EVD-000011",
+      "ok": true,
+      "error": null,
+      "latency_ms": 1.896
+    }
+  },
+  {
+    "seq": 50,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.710118+00:00",
+    "payload": {
+      "step": 3,
+      "request_id": "inventory_rr",
+      "name": "query_metrics",
+      "arguments": {
+        "node": "inventory",
+        "metric": "request_rate",
+        "start": "2026-08-03T05:44:00Z",
+        "end": "2026-08-03T08:44:00Z"
+      }
+    }
+  },
+  {
+    "seq": 51,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.713363+00:00",
+    "payload": {
+      "evidence_id": "EVD-000012",
+      "sequence": 12,
+      "source_kind": "tool",
+      "source_name": "query_metrics",
+      "result_kind": "metric_series",
+      "record_count": 1,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 52,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.completed",
+    "at": "2026-09-11T12:36:33.713363+00:00",
+    "payload": {
+      "step": 3,
+      "request_id": "inventory_rr",
+      "name": "query_metrics",
+      "evidence_id": "EVD-000012",
+      "ok": true,
+      "error": null,
+      "latency_ms": 2.439
+    }
+  },
+  {
+    "seq": 53,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.713363+00:00",
+    "payload": {
+      "step": 3,
+      "request_id": "rb_search",
+      "name": "search_runbooks",
+      "arguments": {
+        "query": "checkout latency regression rollback release",
+        "service": "checkout",
+        "limit": 3
+      }
+    }
+  },
+  {
+    "seq": 54,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.726060+00:00",
+    "payload": {
+      "evidence_id": "EVD-000013",
+      "sequence": 13,
+      "source_kind": "tool",
+      "source_name": "search_runbooks",
+      "result_kind": "runbook_search",
+      "record_count": 3,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 55,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.completed",
+    "at": "2026-09-11T12:36:33.726060+00:00",
+    "payload": {
+      "step": 3,
+      "request_id": "rb_search",
+      "name": "search_runbooks",
+      "evidence_id": "EVD-000013",
+      "ok": true,
+      "error": null,
+      "latency_ms": 11.144
+    }
+  },
+  {
+    "seq": 56,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "status.changed",
+    "at": "2026-09-11T12:36:33.726060+00:00",
+    "payload": {
+      "from_status": "gathering",
+      "to_status": "deliberating",
+      "note": "step 3 gathered"
+    }
+  },
+  {
+    "seq": 57,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "step.started",
+    "at": "2026-09-11T12:36:33.726060+00:00",
+    "payload": {
+      "step": 4,
+      "budget_remaining": {
+        "steps": 4,
+        "tool_calls": 13,
+        "resource_reads": 12,
+        "model_calls": 11,
+        "repair_rounds": 1
+      }
+    }
+  },
+  {
+    "seq": 58,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "provider.completed",
+    "at": "2026-09-11T12:36:33.728065+00:00",
+    "payload": {
+      "step": 4,
+      "purpose": "deliberate",
+      "provider": "scripted-demo",
+      "model": "playbook-v1",
+      "stop_reason": "tool_use",
+      "latency_ms": 0.0,
+      "text_preview": "[scripted demonstration] step 4/4: read_resource, finish_investigation",
+      "tool_requests": 2,
+      "usage_reported": false,
+      "input_tokens": null,
+      "output_tokens": null
+    }
+  },
+  {
+    "seq": 59,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "status.changed",
+    "at": "2026-09-11T12:36:33.728065+00:00",
+    "payload": {
+      "from_status": "deliberating",
+      "to_status": "gathering",
+      "note": "step 4: 2 requested action(s)"
+    }
+  },
+  {
+    "seq": 60,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.728065+00:00",
+    "payload": {
+      "step": 4,
+      "request_id": "runbook",
+      "name": "read_resource",
+      "arguments": {
+        "uri": "runbook://RB-004"
+      }
+    }
+  },
+  {
+    "seq": 61,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "evidence.registered",
+    "at": "2026-09-11T12:36:33.728065+00:00",
+    "payload": {
+      "evidence_id": "EVD-000014",
+      "sequence": 14,
+      "source_kind": "resource",
+      "source_name": "runbook://RB-004",
+      "result_kind": "document",
+      "record_count": 1,
+      "ok": true,
+      "untrusted": true
+    }
+  },
+  {
+    "seq": 62,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "resource.read",
+    "at": "2026-09-11T12:36:33.728065+00:00",
+    "payload": {
+      "step": 4,
+      "request_id": "runbook",
+      "uri": "runbook://RB-004",
+      "evidence_id": "EVD-000014",
+      "ok": true,
+      "error": null
+    }
+  },
+  {
+    "seq": 63,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "tool.requested",
+    "at": "2026-09-11T12:36:33.728065+00:00",
+    "payload": {
+      "step": 4,
+      "request_id": "finish",
+      "name": "finish_investigation",
+      "arguments": {
+        "reason": "deployment aligned with onset, mechanism visible in logs, dependency latency isolated to inventory"
+      }
+    }
+  },
+  {
+    "seq": 64,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "status.changed",
+    "at": "2026-09-11T12:36:33.728065+00:00",
+    "payload": {
+      "from_status": "gathering",
+      "to_status": "concluding",
+      "note": "deployment aligned with onset, mechanism visible in logs, dependency latency isolated to inventory"
+    }
+  },
+  {
+    "seq": 65,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "validation.started",
+    "at": "2026-09-11T12:36:33.728065+00:00",
+    "payload": {
+      "round": 0
+    }
+  },
+  {
+    "seq": 66,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "provider.completed",
+    "at": "2026-09-11T12:36:33.728065+00:00",
+    "payload": {
+      "step": 4,
+      "purpose": "report",
+      "provider": "scripted-demo",
+      "model": "playbook-v1",
+      "stop_reason": "structured",
+      "latency_ms": 0.0,
+      "text_preview": "",
+      "tool_requests": 0,
+      "usage_reported": false,
+      "input_tokens": null,
+      "output_tokens": null
+    }
+  },
+  {
+    "seq": 67,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "status.changed",
+    "at": "2026-09-11T12:36:33.734654+00:00",
+    "payload": {
+      "from_status": "concluding",
+      "to_status": "validating",
+      "note": "draft 0: 0 error(s)"
+    }
+  },
+  {
+    "seq": 68,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "report.completed",
+    "at": "2026-09-11T12:36:33.735034+00:00",
+    "payload": {
+      "status": "root_cause_identified",
+      "confidence": 0.86,
+      "primary_hypothesis_id": "H1",
+      "validation_ok": true,
+      "repair_rounds": 0
+    }
+  },
+  {
+    "seq": 69,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "status.changed",
+    "at": "2026-09-11T12:36:33.736020+00:00",
+    "payload": {
+      "from_status": "validating",
+      "to_status": "completed",
+      "note": "validated"
+    }
+  },
+  {
+    "seq": 70,
+    "investigation_id": "inv-inc-2026-0101-adb6cc7f",
+    "type": "investigation.completed",
+    "at": "2026-09-11T12:36:33.736020+00:00",
+    "payload": {
+      "terminal_status": "completed",
+      "steps": 4,
+      "tool_calls": 11,
+      "resource_reads": 1,
+      "evidence_count": 14,
+      "rejected_actions": 0,
+      "duration_seconds": 0.146,
+      "termination_reason": null,
+      "has_report": true
+    }
+  }
+]
