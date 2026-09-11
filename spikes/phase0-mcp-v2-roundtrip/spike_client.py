@@ -73,7 +73,7 @@ async def exercise(client: Client, label: str):
 async def main():
     print("mcp version:", getattr(mcp, "__version__", "?"))
     sys.path.insert(0, HERE)
-    from spike_server import mcp as server  # noqa: E402
+    from spike_server import mcp as server
 
     async with Client(server, raise_exceptions=True) as client:
         await exercise(client, "IN-MEMORY Client(server)")

@@ -8,11 +8,10 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
-
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ResourceNotFoundError, ToolError
 from mcp.types import ToolAnnotations
+from pydantic import BaseModel, Field
 
 mcp = MCPServer("spike-ops", instructions="Read-only synthetic ops environment (spike).")
 

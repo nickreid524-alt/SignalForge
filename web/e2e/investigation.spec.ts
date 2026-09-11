@@ -24,20 +24,22 @@ test("a scripted investigation runs end to end and its conclusion is traceable",
   await expect(page.getByRole("radio", { name: /Anthropic/ })).toBeDisabled();
   await page.getByRole("button", { name: "Investigate", exact: true }).click();
 
-  // The workspace opens on the live timeline.
+  // The workspace opens on the live timeline and renders the stream as it arrives. A scripted run
+  // against the local MCP server can finish in well under a second, and the workspace then moves
+  // itself to the conclusion, so asserting timeline content here would race that transition. Wait
+  // for the move, which is the behaviour worth asserting anyway, and read the timeline back
+  // afterwards: the events are durable, so it is complete whenever it is opened.
   await expect(page).toHaveURL(/\/investigations\/inv-inc-2026-0101-/);
-  await expect(page.getByText("MCP TOOL").first()).toBeVisible();
-  await expect(page.getByText("PROVIDER", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("RESOURCE", { exact: true }).first()).toBeVisible();
-
-  // Evidence and hypotheses build up from the stream.
-  await expect(page.getByText(/^EVD-000003/).first()).toBeVisible();
-  await expect(page.getByText("H1").first()).toBeVisible();
-
-  // The investigation completes and the workspace moves to the conclusion.
   await expect(page.getByText("completed").first()).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("tab", { name: "report" })).toHaveAttribute("aria-selected", "true");
+
+  // The conclusion is stated, and it is grounded.
   await expect(page.getByText("PRIMARY HYPOTHESIS", { exact: true })).toBeVisible();
   await expect(page.getByText("GROUNDING VALIDATED", { exact: true })).toBeVisible();
+
+  // Evidence and hypotheses built up from the stream.
+  await expect(page.getByText(/^EVD-000003/).first()).toBeVisible();
+  await expect(page.getByText("H1").first()).toBeVisible();
 
   // Hypotheses show their evolution, not just a final answer.
   await expect(page.getByText("evolution").first()).toBeVisible();
@@ -49,6 +51,13 @@ test("a scripted investigation runs end to end and its conclusion is traceable",
   await citation.click();
   await expect(page.getByRole("heading", { name: `Evidence ${label}` })).toBeVisible();
   await expect(page.getByText("Untrusted evidence", { exact: true })).toBeVisible();
+
+  // The timeline holds the whole run: MCP tool calls, resource reads and provider steps, each one
+  // folded into a single entry rather than one row per event.
+  await page.getByRole("tab", { name: "timeline" }).click();
+  await expect(page.getByText("MCP TOOL").first()).toBeVisible();
+  await expect(page.getByText("PROVIDER", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("RESOURCE", { exact: true }).first()).toBeVisible();
 
   // The observable trace is available and is not labelled as reasoning.
   await page.getByRole("tab", { name: "Observable trace" }).click();
