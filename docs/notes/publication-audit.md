@@ -96,12 +96,21 @@ Verification after the rewrite:
   unrelated projects the planning notes discussed, and neither survives in any document body;
 - the engineering documentation a reader actually needs is untouched and lives in `docs/notes/`.
 
-What the rewrite deliberately did not do is edit the text of files that survive. Older revisions of
-the README and of this audit still refer to the removed directory by path, and one earlier revision
-of the API boundary note mentions another project by name in an aside about framework choice. Those
-are incidental references in files that remain part of the history, not the planning documents
-themselves, and removing them would mean rewriting the content of unrelated commits. They contain
-nothing confidential.
+A second pass then removed the remaining references to that material from older revisions of files
+that survive. Four replacements were made, each one an exact string identified in advance and
+verified to match only the intended historical blobs:
+
+| Where | What changed |
+|---|---|
+| five earlier `README.md` revisions | a phase-table cell pointing at the removed directory, and one sentence describing the intended reader |
+| one earlier `docs/notes/api-boundary.md` revision | a sentence naming an unrelated project in an aside about framework choice |
+| one earlier revision of this audit | the closing section that discussed the removal as an open question |
+
+Seven historical blobs changed in total. No file in the current tree was touched: the tree object at
+the head of the rewritten history is the same object as before the pass, so every current document,
+test, screenshot and source file is byte-for-byte unchanged. Where a replacement would have left a
+sentence dangling, the whole sentence was rewritten to a neutral engineering equivalent rather than
+being cut. Ordinary words were left alone; only the specific planning sentences were touched.
 
 The temporary local backup branch was itself rewritten by `git-filter-repo`, which rewrites every
 ref in the repository, so it was deleted rather than relied on. The safety net during the operation
