@@ -1,0 +1,172 @@
+/**
+ * The observable investigation trace.
+ *
+ * Named carefully: this is the *observable* record of what the system did, not a chain of thought.
+ * Provider reasoning blocks are never recorded by the backend and never appear here.
+ */
+
+import { Badge, Collapsible, JsonBlock, Latency, Panel } from "@/components/primitives";
+import type { InvestigationTrace } from "@/types/api";
+
+export function TraceView({ trace }: { trace: InvestigationTrace }) {
+  const inv = trace.investigation;
+  return (
+    <div className="stack">
+      <Panel title="Observable investigation trace">
+        <p className="small muted" style={{ margin: "0 0 var(--space-3)" }}>{trace.notice}</p>
+        <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "auto 1fr", gap: "5px var(--space-4)", fontSize: "var(--text-sm)" }}>
+          <dt className="dim">Provider</dt>
+          <dd className="mono" style={{ margin: 0 }}>
+            {inv.provider_name} ({inv.provider_mode}) · model {inv.provider_model ?? "—"} · uses LLM {String(inv.uses_llm)}
+          </dd>
+          <dt className="dim">MCP transport</dt>
+          <dd className="mono" style={{ margin: 0 }}>{inv.transport}</dd>
+          <dt className="dim">Window</dt>
+          <dd className="mono" style={{ margin: 0 }}>{inv.started_at} → {inv.ended_at ?? "running"}</dd>
+          {inv.usage && (
+            <>
+              <dt className="dim">Usage</dt>
+              <dd className="mono" style={{ margin: 0 }}>
+                {Object.entries(inv.usage).map(([key, value]) => `${key.replace(/_/g, " ")} ${value}`).join(" · ")}
+              </dd>
+            </>
+          )}
+        </dl>
+      </Panel>
+
+      <Panel title={`State transitions (${trace.status_changes.length})`} flush>
+        <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {trace.status_changes.map((change, index) => (
+            <li key={index} className="row" style={{ padding: "5px var(--space-4)", borderBottom: "1px solid var(--border-hairline)", gap: "var(--space-3)" }}>
+              <span className="mono xs dim" style={{ width: 62 }}>{change.at.slice(11, 19)}</span>
+              <span className="small muted">{change.from_status}</span>
+              <span className="dim" aria-hidden="true">→</span>
+              <span className="small" style={{ fontWeight: 600 }}>{change.to_status}</span>
+              {change.note && <span className="xs dim">{change.note}</span>}
+            </li>
+          ))}
+        </ol>
+      </Panel>
+
+      <Panel title={`Provider calls (${trace.model_calls.length})`} flush>
+        <table className="table">
+          <thead>
+            <tr>
+              <th scope="col">Call</th><th scope="col">Step</th><th scope="col">Purpose</th>
+              <th scope="col">Model</th><th scope="col">Stop</th><th scope="col">Latency</th><th scope="col">Tokens</th>
+            </tr>
+          </thead>
+          <tbody>
+            {trace.model_calls.map((call) => (
+              <tr key={call.id}>
+                <td className="table__id">{call.id.split("-").pop()}</td>
+                <td className="table__num">{call.step ?? "—"}</td>
+                <td className="small">{call.purpose}</td>
+                <td className="mono small">{call.provider_model ?? "—"}</td>
+                <td className="small">
+                  {call.error_category ? <Badge tone="danger">{call.error_category}</Badge> : call.stop_reason ?? "—"}
+                </td>
+                <td className="table__num"><Latency ms={call.latency_ms} /></td>
+                <td className="table__num small">
+                  {call.usage_reported ? `${call.input_tokens} / ${call.output_tokens}` : <span className="dim">n/a</span>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Panel>
+
+      <Panel title={`Requested actions (${trace.actions.length})`} flush>
+        <table className="table">
+          <thead>
+            <tr>
+              <th scope="col">Step</th><th scope="col">Kind</th><th scope="col">Action</th>
+              <th scope="col">Outcome</th><th scope="col">Evidence</th><th scope="col">Latency</th>
+            </tr>
+          </thead>
+          <tbody>
+            {trace.actions.map((action, index) => (
+              <tr key={index}>
+                <td className="table__num">{action.step}</td>
+                <td className="small">{action.kind.replace(/_/g, " ")}</td>
+                <td className="mono small">
+                  {action.name}
+                  {Object.keys(action.arguments).length > 0 && (
+                    <Collapsible summary="arguments"><JsonBlock value={action.arguments} maxHeight={180} /></Collapsible>
+                  )}
+                </td>
+                <td className="small">
+                  {!action.accepted ? (
+                    <span>
+                      <Badge tone="danger">refused</Badge>{" "}
+                      <span className="xs dim">{action.rejection_code}</span>
+                    </span>
+                  ) : action.ok === false ? (
+                    <Badge tone="danger">error</Badge>
+                  ) : (
+                    <Badge tone="ok">ok</Badge>
+                  )}
+                </td>
+                <td className="table__id">{action.evidence_id ?? <span className="dim">—</span>}</td>
+                <td className="table__num"><Latency ms={action.latency_ms} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Panel>
+
+      {trace.hypothesis_updates.length > 0 && (
+        <Panel title={`Hypothesis updates (${trace.hypothesis_updates.length})`} flush>
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">Step</th><th scope="col">Hypothesis</th><th scope="col">Status</th>
+                <th scope="col">Confidence</th><th scope="col">Statement</th>
+              </tr>
+            </thead>
+            <tbody>
+              {trace.hypothesis_updates.map((update, index) => (
+                <tr key={index}>
+                  <td className="table__num">{update.step}</td>
+                  <td className="table__id">{update.hypothesis_id}</td>
+                  <td className="small">{update.status}</td>
+                  <td className="table__num">{update.confidence.toFixed(2)}</td>
+                  <td className="small" style={{ maxWidth: 520 }}>{update.statement}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Panel>
+      )}
+
+      <Panel title={`Validation rounds (${trace.validations.length})`} flush>
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {trace.validations.map((round) => (
+            <li key={round.round} style={{ padding: "var(--space-3) var(--space-4)", borderBottom: "1px solid var(--border-hairline)" }}>
+              <div className="row" style={{ gap: 8 }}>
+                <span className="small" style={{ fontWeight: 600 }}>Round {round.round}</span>
+                <Badge tone={round.ok ? "ok" : "danger"}>{round.ok ? "passed" : "failed"}</Badge>
+                <span className="xs dim">{round.error_count} errors · {round.warning_count} warnings</span>
+              </div>
+              {round.issues.length > 0 && (
+                <ul className="xs" style={{ margin: "4px 0 0", paddingLeft: "var(--space-4)" }}>
+                  {round.issues.map((issue, index) => (
+                    <li key={index} className={issue.severity === "error" ? "" : "dim"}>
+                      <span className="mono">{issue.rule}</span> {issue.message}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+          {trace.repairs.map((repair) => (
+            <li key={`repair-${repair.round}`} style={{ padding: "var(--space-3) var(--space-4)" }}>
+              <span className="small" style={{ fontWeight: 600 }}>Repair request {repair.round}</span>
+              <p className="xs muted" style={{ margin: "3px 0 0" }}>{repair.request_text.slice(0, 400)}</p>
+            </li>
+          ))}
+        </ul>
+      </Panel>
+    </div>
+  );
+}
